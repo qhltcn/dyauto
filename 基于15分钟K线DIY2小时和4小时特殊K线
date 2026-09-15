@@ -1,0 +1,239 @@
+在test.h中声明全局变量
+void Kbar();            // 2H，4H Bar生成函数
+在test.cpp中设计
+// 非经典周期(2h,4h周期K线周期)Bar生成函数
+void test::Kbar()
+{
+	K15.clear();
+	K16.clear();
+	K2.clear();
+	K17.clear();
+	K4.clear();
+
+	Kxian k1;
+	map<string, TKVALUE>::iterator it;
+	for (it = mapK["min15"][sInst].begin(); it != mapK["min15"][sInst].end(); ++it)
+	{
+
+		k1.num = 0;
+		if (it->first.substr(11, 5) == "14:45")k1.num = 1;
+		k1.o = it->second.dOpen;
+		k1.h = it->second.dHigh;
+		k1.l = it->second.dLow;
+		k1.c = it->second.dClose;
+		k1.cj = it->second.nVolume;
+		k1.cc = it->second.nOpenInterest;
+		K15[it->first] = k1;
+
+	}
+
+	int i = 0;
+	bool lastBar = false;
+
+	map<string, Kxian>::iterator it1;
+	for (it1 = K15.begin(); it1 != K15.end(); it1++)
+	{
+		if (lastBar)
+		{
+			i = 1;
+			lastBar = false;
+		}
+		else if (i > 0)
+		{
+			i++;
+		}
+
+		it1->second.num = i;
+
+		if (it1->first.substr(11, 5) == "14:45")
+		{
+			lastBar = true;
+		}
+	}
+	double oo = 0, hh = 0, ll = 0, cc = 0, cjl = 0, ccl = 0;
+	Kxian k2, k3;
+	int j = 0;
+	map<string, Kxian>::iterator   it2;
+	for (it2 = K15.begin(); it2 != K15.end(); it2++)
+	{
+		j++;
+		if (it2->second.num == 1)
+		{
+			j = 1;
+			oo = it2->second.o;
+			hh = it2->second.h;
+			ll = it2->second.l;
+			cc = it2->second.c;
+			cjl = it2->second.cj;
+			ccl = it2->second.cc;
+		}
+
+		if (j > 1 && j < 9)
+		{
+			hh = max(hh, it2->second.h);
+			ll = min(ll, it2->second.l);
+			cc = it2->second.c;
+			cjl = cjl + it2->second.cj;
+			ccl = it2->second.cc;
+		}
+		if (j == 9)
+		{
+			j = 1;
+			oo = it2->second.o;
+			hh = it2->second.h;
+			ll = it2->second.l;
+			cc = it2->second.c;
+			cjl = it2->second.cj;
+			ccl = it2->second.cc;
+		}
+		k2.num = j;
+		k2.o = oo;
+		k2.h = hh;
+		k2.l = ll;
+		k2.c = cc;
+		k2.cj = cjl;
+		k2.cc = ccl;
+		K16[it2->first] = k2;
+	}
+
+	bool first = true;
+	string starttime;
+	map<string, Kxian>::iterator   it3;
+	for (it3 = K16.begin(); it3 != K16.end(); it3++)
+	{
+		if (it3->second.num == 1)
+		{
+			if (!first)
+			{
+				K2[starttime] = k3;
+			}
+			starttime = it3->first;
+			first = false;
+		}
+		k3.o = it3->second.o;
+		k3.h = it3->second.h;
+		k3.l = it3->second.l;
+		k3.c = it3->second.c;
+		k3.num = it3->second.num;
+		k3.cc = it3->second.cc;
+		k3.cj = it3->second.cj;
+	}
+	if (!first)
+	{
+		K2[starttime] = k3;
+	}
+	// *******************************************************
+	j = 0;
+	map<string, Kxian>::iterator   it4;
+	for (it4 = K15.begin(); it4 != K15.end(); it4++)
+	{
+		j++;
+		if (it4->second.num == 1)
+		{
+			j = 1;
+			oo = it4->second.o;
+			hh = it4->second.h;
+			ll = it4->second.l;
+			cc = it4->second.c;
+			cjl = it4->second.cj;
+			ccl = it4->second.cc;
+		}
+
+		if (j > 1 && j < 17)
+		{
+			hh = max(hh, it4->second.h);
+			ll = min(ll, it4->second.l);
+			cc = it4->second.c;
+			cjl = cjl + it4->second.cj;
+			ccl = it4->second.cc;
+
+		}
+		if (j == 17)
+		{
+			j = 1;
+			oo = it4->second.o;
+			hh = it4->second.h;
+			ll = it4->second.l;
+			cc = it4->second.c;
+			cjl = it4->second.cj;
+			ccl = it4->second.cc;
+		}
+		k2.num = j;
+		k2.o = oo;
+		k2.h = hh;
+		k2.l = ll;
+		k2.c = cc;
+		k2.cc = ccl;
+		k2.cj = cjl;
+		K17[it4->first] = k2;
+	}
+	string starttime4;
+	bool first4 = true;
+
+	map<string, Kxian>::iterator it5;
+	for (it5 = K17.begin(); it5 != K17.end(); it5++)
+	{
+		if (it5->second.num == 1)
+		{
+			if (!first4)
+			{
+				K4[starttime4] = k3;
+			}
+
+			starttime4 = it5->first;
+			first4 = false;
+		}
+
+		k3.o = it5->second.o;
+		k3.h = it5->second.h;
+		k3.l = it5->second.l;
+		k3.c = it5->second.c;
+		k3.num = it5->second.num;
+		k3.cj = it5->second.cj;
+		k3.cc = it5->second.cc;
+	}
+
+	if (!first4)
+	{
+		K4[starttime4] = k3;
+	}
+
+	// 2H元素生成
+	thbartime.clear();
+	thopen.clear();
+	thhigh.clear();
+	thlow.clear();
+	thclose.clear();
+	thvolume.clear();
+	thopeninterest.clear();
+	map<string, Kxian>::reverse_iterator  it6; // 逆序
+	for (it6 = K2.rbegin(); it6 != K2.rend(); it6++)
+	{
+		thbartime.push_back(it6->first);           // 日期时间(2026/09/02C14:30:00)
+		thopen.push_back(it6->second.o);           // 开盘价
+		thhigh.push_back(it6->second.h);           // 最高价
+		thlow.push_back(it6->second.l);            // 最低价
+		thclose.push_back(it6->second.c);          // 收盘价
+		thvolume.push_back(it6->second.cj);        // 成交量
+		thopeninterest.push_back(it6->second.cc);  // 持仓量
+	}
+	// 4H元素生成
+	fhbartime.clear();
+	fhopen.clear();
+	fhhigh.clear();
+	fhlow.clear();
+	fhclose.clear();
+	fhvolume.clear();
+	fhopeninterest.clear();
+	map<string, Kxian>::reverse_iterator  it7;// 逆序
+	for (it7 = K4.rbegin(); it7 != K4.rend(); it7++)
+	{
+		fhbartime.push_back(it7->first);           // 日期时间(2026/09/02C14:30:00)
+		fhopen.push_back(it7->second.o);           // 开盘价
+		fhhigh.push_back(it7->second.h);           // 最高价
+		fhlow.push_back(it7->second.l);            // 最低价
+		fhclose.push_back(it7->second.c);          // 收盘价
+		fhvolume.push_back(it7->second.cj);        // 成交量
+		fhopeninterest.push_back(it7->second.cc);  // 持仓量
+	}
+}
