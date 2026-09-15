@@ -1,0 +1,60 @@
+//+-----------------------------------------------------------------------------------------------------------------+
+//| 第二部分：Bar 基本元素  【逆序数组，[0]=最新】                                                                  |
+//+-----------------------------------------------------------------------------------------------------------------+
+vector<double> Close();                                                      // 收盘价
+vector<double> Open();                                                       // 开盘价
+vector<double> High();                                                       // 最高价
+vector<double> Low();                                                        // 最低价
+vector<double> Median();                                                     // 中间价 (H+L)/2
+vector<double> AvgPrice();                                                   // 平均价 (H+L+O+C)/4
+vector<double> TypicalPrice();                                               // 典型价 (H+L+C)/3
+vector<double> OpenInterest();                                               // 持仓量
+vector<double> Volume();                                                     // 成交量
+vector<string> Date();                                                       // 日期
+vector<string> Time();                                                       // 时间
+
+
+//+-----------------------------------------------------------------------------------------------------------------+
+//| 第五部分：常用指标函数（直接判断用）  【逆序数组，[0]=最新】                                                                  |
+//+-----------------------------------------------------------------------------------------------------------------+
+vector<double> Summation(vector<double> pc, int num);                      // 求和
+vector<double> Average(vector<double> pc, int num);                        // 均线
+vector<double> Xaverage(vector<double> pc, int num);                       // EMA(Xaverage)
+vector<double> EMA(vector<double> pc, int num);                            // EMA
+vector<double> SMA(vector<double> pc, int num, int num2);                  // 指数平滑均线
+vector<double> WMA(vector<double> pc, int num);                            // 加权均线
+vector<double> Highest(vector<double> pc, int num);                        // N周期最高值
+vector<double> Lowest(vector<double> pc, int num);                         // N周期最低值
+vector<double> AvgTruerange(int num);                                      // ATR
+vector<double> Truerange();                                                // 真实波幅
+vector<double> TR();                                                       // 真实波幅
+vector<double> ATR(int num);                                               // ATR平均真实波幅
+vector<double> Variance(vector<double> pc, int num);                       // 方差
+vector<double> StandardDev(vector<double> pc, int num);                    // 标准差
+vector<double> KDJ_kvalue(int num1, int num2, int num3);                   // KDJ-K值
+vector<double> KDJ_dvalue(int num1, int num2, int num3);                   // KDJ-D值
+vector<double> KDJ_jvalue(int num1, int num2, int num3);                   // KDJ-J值
+vector<double> MACD_DIFF(vector<double> pc, int num1, int num2, int num3); // MACD-DIFF
+vector<double> MACD_DEA(vector<double> pc, int num1, int num2, int num3);  // MACD-DEA
+vector<double> MACD(vector<double> pc, int num1, int num2, int num3);      // MACD-Bar
+vector<double> SwingHigh(vector<double>pc, int leftbars, int rightbars);   // 返回SwingHigh数值(逆序数组)
+vector<double> SwingLow(vector<double>pc, int leftbars, int rightbars);    // 返回SwingLowh数值(逆序数组)
+vector<double> RMS(vector<double>pc, int num);                             // 返回均方根(Root Mean Square,RMS)(逆序数组)
+vector<double> SuperSmoother(vector<double>pc, int num);                   // 返回均方根(Root Mean Square,RMS)(逆序数组)
+vector<double> Highpass(vector<double>pc, int num);                        // 返回Highpass(逆序数组)
+vector<double> Adx(int num, int num2);                                     // adx指标(逆序版)
+vector<double> Adx_pdi(int num);                                           // 返回+DI数组形式(逆序版)
+vector<double> Adx_mdi(int num);                                           // 返回-DI数组形式(逆序版)
+vector<double> SAR(vector<double>highs, vector<double>lows, double initial_af, double max_af);// 抛物线转向指标(SAR)默认参数，initial_af = 0.02,max_af = 0.2
+vector<double> CalcSAR(int N, double STEP, double MAX);
+vector<double> Parabolic(int N, double STEP, double MAX);                  // 严格遵守文华财经规则的SAR公式【逆序数组格式】
+vector<double> RSI(vector<double>pc, int num);                             // RSI指标计算公式【逆序数组格式】
+vector<double> CR(int num);                                                // CR能量指标【逆序数组格式】
+vector<double> LinearRegression(vector<double>pc, int num);                // LinearRegression线性回归【逆序数组格式】
+vector<double> LinearRegression_slope(vector<double>pc, int num);          // LinearRegression线性回归角度【逆序数组格式】
+vector<double> LinearRegression_intercept(vector<double>pc, int num);      // LinearRegression线性回归截距【逆序数组格式】
+vector<double> OBV();                                                      // OBV指标：能量潮【逆序数组格式】
+vector<double> TRIX(vector<double>pc, int num);                             // 三重指数平滑振荡器（TRIX: Triple Exponential Smoothing Oscillator)【逆序数组格式】
+vector<double> TRIX_signal(vector<double>pc, int num, int num2);            // 三重指数平滑振荡器信号线（TRIX: Triple Exponential Smoothing Oscillator signals)【逆序数组格式】
+vector<double> CCI(vector<double> pc, int num);                            // 指定价格序列计算CCI【逆序数组格式】
+vector<double> EXPMA(vector<double> pc, int num);                          // EXPMA指标【逆序数组格式】
