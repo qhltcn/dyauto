@@ -1,0 +1,313 @@
+/*
+                                                                       鼎元 Formula Engine V2.0 设计规范
+Formula Engine 四层结构
+
+Math
+↓
+Price
+↓
+Series
+↓
+Fast Calculate
+↓
+Reference
+
+rice（原始数据） → Series（加工） → FC（取当前值） → Ref（取历史值）
+第一原则：以策略设计为中心，而不是以指标设计为中心（最重要）
+第二原则：按照数据流设计，而不是按照算法设计
+第三原则：根据用途决定返回类型
+第四原则：效率优先，但不牺牲可读性
+第五原则：高频函数遵循行业习惯，低频函数遵循鼎元规范
+第六原则：不要为了统一而统一，而是为了“写策略顺手”而统一。
+| 类型   | 返回值 | 是否逆序 | 用途     |
+| ------ | ------ | ---- ----| ----     |
+| Math   | double | 无       | 数学计算 |
+| Price  | vector | 是       | 原始数据 |
+| Series | vector | 否       | 中间加工 |
+| FC     | double | 无       | 最新值   |
+| RefFC  | double | 无       | 历史值   |
+
+*/
+//+=================================================================================================================+
+//| function.h  —  公式指标函数声明                                                                                |
+//+=================================================================================================================+
+//返回数值形式函数
+//+-----------------------------------------------------------------------------------------------------------------+
+//| 第一部分：基本数值运算                                                                                          |
+//+-----------------------------------------------------------------------------------------------------------------+
+double iff(bool cond1, int num, int ref);                                    // 条件函数
+double max2(double a, double b);                                             // 两值取大
+double max3(double a, double b, double c);                                   // 三值取大
+double min2(double a, double b);                                             // 两值取小
+double min3(double a, double b, double c);                                   // 三值取小
+string TrimCtpField(const char* field, size_t maxLen);                       // 取消字符串前后面空格
+//+-----------------------------------------------------------------------------------------------------------------+
+//| 第二部分：Bar 基本元素  【逆序数组，[0]=最新】                                                                  |
+//+-----------------------------------------------------------------------------------------------------------------+
+vector<double> Close();                                                      // 收盘价
+vector<double> Open();                                                       // 开盘价
+vector<double> High();                                                       // 最高价
+vector<double> Low();                                                        // 最低价
+vector<double> Median();                                                     // 中间价 (H+L)/2
+vector<double> AvgPrice();                                                   // 平均价 (H+L+O+C)/4
+vector<double> TypicalPrice();                                               // 典型价 (H+L+C)/3
+vector<double> OpenInterest();                                               // 持仓量
+vector<double> Volume();                                                     // 成交量
+vector<string> Date();                                                       // 日期
+vector<string> Time();                                                       // 时间
+//+-----------------------------------------------------------------------------------------------------------------+
+//| 第三部分：快速计算函数（返回数值型）                                                                            |
+//+-----------------------------------------------------------------------------------------------------------------+
+double SummationFC(string period, string inst, string Pricetype, int num);             // 求和
+double AverageFC(string period, string inst, string Pricetype, int num);               // 均线
+double AveragerefFC(string period, string inst, string Pricetype, int num, int ref);   // 均线[ref]
+double HighestFC(string period, string inst, string Pricetype, int num);               // 最高值
+double HighestrefFC(string period, string inst, string Pricetype, int num, int ref);   // 最高值[ref]
+double LowestFC(string period, string inst, string Pricetype, int num);                // 最低值
+double LowestrefFC(string period, string inst, string Pricetype, int num, int ref);    // 最低值[ref]
+double AvgtruerangeFC(string period, string inst, int num);                            // ATR
+double BollingerbandsFC(string period, string inst, int num, int numDevs);             // BOLL
+double VarianceFC(string period, string inst, int num);                                // 方差
+double StandardDevFC(string period, string inst, int num);                             // 标准差
+double XaverageFC(string period, string inst, int num);                                // EMA(Xaverage)
+double EmaFC(string period, string inst, int num);                                     // EMA
+double CloserefFC(string period, string inst, int ref);                                // Close[ref]
+double OpenrefFC(string period, string inst, int ref);                                 // Open[ref]
+double HighrefFC(string period, string inst, int ref);                                 // High[ref]
+double LowrefFC(string period, string inst, int ref);                                  // Low[ref]
+double Macd(string period, string inst, int num1, int num2, int num3);                 // MACD值
+double Aema(string period, string inst, int num, int pds);                             // 自适应EMA
+double PivotHighFC(vector<double>pc, int leftbars, int rightbars, int currentIndex);   // 返回PivotHighFC数值(数值型)
+double PivotLowFC(vector<double>pc, int leftbars, int rightbars, int currentIndex);    // 返回PivotLowFC数值(数值型)
+double SwingHighFC(vector<double>pc, int leftbars, int rightbars, int ref);            // 返回SwingHigh数值(数值型)
+double SwingHighBarFC(vector<double>pc, int leftbars, int rightbars, int ref);         // 返回最新SwingHigh值所在bar标号序列(数值型)
+double SwingLowFC(vector<double>pc, int leftbars, int rightbars, int ref);             // 返回SwingLow数值(数值型)
+double SwingLowBarFC(vector<double>pc, int leftbars, int rightbars, int ref);          // 返回最新SwingLow值所在bar标号序列(数值型)
+double RmsFC(vector<double>pc, int num);                                               // 返回均方根(Root Mean Square,RMS)(数值型)
+double LinearRegressionFC(vector<double>pc, int num, int ref);                         // 线性回归预测值(数值型)
+double LinearRegressionFC_slope(vector<double>pc, int num, int ref);                   // 线性回归预测值(数值型)
+double LinearRegressionFC_intercept(vector<double>pc, int num, int ref);               // 线性回归预测值(截距数值型)
+//基本函数运算(结束)返回数值型【数值型，适合直接做逻辑判断用】
+//+-----------------------------------------------------------------------------------------------------------------+
+//| 第四部分：Bar 基本元素  【正序数组，适合中间变量计算】                                                          |
+//+-----------------------------------------------------------------------------------------------------------------+
+vector<double> SeriesClose();                                                // 收盘价
+vector<double> SeriesOpen();                                                 // 开盘价
+vector<double> SeriesHigh();                                                 // 最高价
+vector<double> SeriesLow();                                                  // 最低价
+vector<double> SeriesMedian();                                               // 中间价 (H+L)/2
+vector<double> SeriesAvgPrice();                                             // 平均价 (H+L+O+C)/4
+vector<double> SeriesTypicalPrice();                                         // 典型价 (H+L+C)/3
+vector<double> SeriesOpenInterest();                                         // 持仓量
+vector<double> SeriesVolume();                                               // 成交量
+vector<string> SeriesDate();                                                 // 日期
+vector<string> SeriesTime();                                                 // 时间
+//+-----------------------------------------------------------------------------------------------------------------+
+//| 第五部分：常用指标函数（直接判断用）  【逆序数组，[0]=最新】                                                                  |
+//+-----------------------------------------------------------------------------------------------------------------+
+vector<double> Summation(vector<double> pc, int num);                      // 求和
+vector<double> Average(vector<double> pc, int num);                        // 均线
+vector<double> Xaverage(vector<double> pc, int num);                       // EMA(Xaverage)
+vector<double> EMA(vector<double> pc, int num);                            // EMA
+vector<double> SMA(vector<double> pc, int num, int num2);                  // 指数平滑均线
+vector<double> WMA(vector<double> pc, int num);                            // 加权均线
+vector<double> Highest(vector<double> pc, int num);                        // N周期最高值
+vector<double> Lowest(vector<double> pc, int num);                         // N周期最低值
+vector<double> AvgTruerange(int num);                                      // ATR
+vector<double> Truerange();                                                // 真实波幅
+vector<double> TR();                                                       // 真实波幅
+vector<double> ATR(int num);                                               // ATR平均真实波幅
+vector<double> Variance(vector<double> pc, int num);                       // 方差
+vector<double> StandardDev(vector<double> pc, int num);                    // 标准差
+vector<double> KDJ_kvalue(int num1, int num2, int num3);                   // KDJ-K值
+vector<double> KDJ_dvalue(int num1, int num2, int num3);                   // KDJ-D值
+vector<double> KDJ_jvalue(int num1, int num2, int num3);                   // KDJ-J值
+vector<double> MACD_DIFF(vector<double> pc, int num1, int num2, int num3); // MACD-DIFF
+vector<double> MACD_DEA(vector<double> pc, int num1, int num2, int num3);  // MACD-DEA
+vector<double> MACD(vector<double> pc, int num1, int num2, int num3);      // MACD-Bar
+vector<double> SwingHigh(vector<double>pc, int leftbars, int rightbars);   // 返回SwingHigh数值(逆序数组)
+vector<double> SwingLow(vector<double>pc, int leftbars, int rightbars);    // 返回SwingLowh数值(逆序数组)
+vector<double> RMS(vector<double>pc, int num);                             // 返回均方根(Root Mean Square,RMS)(逆序数组)
+vector<double> SuperSmoother(vector<double>pc, int num);                   // 返回均方根(Root Mean Square,RMS)(逆序数组)
+vector<double> Highpass(vector<double>pc, int num);                        // 返回Highpass(逆序数组)
+vector<double> Adx(int num, int num2);                                     // adx指标(逆序版)
+vector<double> Adx_pdi(int num);                                           // 返回+DI数组形式(逆序版)
+vector<double> Adx_mdi(int num);                                           // 返回-DI数组形式(逆序版)
+vector<double> SAR(vector<double>highs, vector<double>lows, double initial_af, double max_af);// 抛物线转向指标(SAR)默认参数，initial_af = 0.02,max_af = 0.2
+vector<double> CalcSAR(int N, double STEP, double MAX);
+vector<double> Parabolic(int N, double STEP, double MAX);                  // 严格遵守文华财经规则的SAR公式【逆序数组格式】
+vector<double> RSI(vector<double>pc, int num);                             // RSI指标计算公式【逆序数组格式】
+vector<double> CR(int num);                                                // CR能量指标【逆序数组格式】
+vector<double> LinearRegression(vector<double>pc, int num);                // LinearRegression线性回归【逆序数组格式】
+vector<double> LinearRegression_slope(vector<double>pc, int num);          // LinearRegression线性回归角度【逆序数组格式】
+vector<double> LinearRegression_intercept(vector<double>pc, int num);      // LinearRegression线性回归截距【逆序数组格式】
+vector<double> OBV();                                                      // OBV指标：能量潮【逆序数组格式】
+vector<double> TRIX(vector<double>pc, int num);                             // 三重指数平滑振荡器（TRIX: Triple Exponential Smoothing Oscillator)【逆序数组格式】
+vector<double> TRIX_signal(vector<double>pc, int num, int num2);            // 三重指数平滑振荡器信号线（TRIX: Triple Exponential Smoothing Oscillator signals)【逆序数组格式】
+vector<double> CCI(vector<double> pc, int num);                            // 指定价格序列计算CCI【逆序数组格式】
+vector<double> EXPMA(vector<double> pc, int num);                          // EXPMA指标【逆序数组格式】
+//+-----------------------------------------------------------------------------------------------------------------+
+//| 第六部分：跨期调用函数  【逆序数组，[0]=最新】                                                                  |
+//+-----------------------------------------------------------------------------------------------------------------+
+vector<double> CrossOverPeriod(string PriceType, string periodType);                  // 跨周期价格
+vector<double> CrossOverPeriodInst(string PriceType, string periodType, string inst); // 跨周期跨合约价格
+//+-----------------------------------------------------------------------------------------------------------------+
+//| 第七部分：数组基本运算【参数与输出均为正序数组】                                                                            |
+//+-----------------------------------------------------------------------------------------------------------------+
+vector<double> SeriesSummation(vector<double> pc, int num);           // 求和
+vector<double> SeriesPlusN(vector<double> pc, double num);            // 数组 + N
+vector<double> SeriestimesN(vector<double> pc, double num);           // 数组 × N
+vector<double> SeriesDivideN(vector<double> pc, double num);          // 数组 ÷ N
+vector<double> SeriesNDivide(int num, vector<double> pc);             // N ÷ 数组
+vector<double> SeriesNMinus(int num, vector<double> pc);              // N - 数组
+vector<double> SeriesPlus(vector<double> pc, vector<double> pc2);     // 数组 + 数组
+vector<double> SeriesMinus(vector<double> pc, vector<double> pc2);    // 数组 - 数组
+vector<double> SeriesTimes(vector<double> pc, vector<double> pc2);    // 数组 × 数组
+vector<double> SeriesDivide(vector<double> pc, vector<double> pc2);   // 数组 ÷ 数组
+vector<double> SeriesSelfMinus(vector<double> pc, int num);           // 数组与自身第N项相减
+vector<double> SeriesSelfDivide(vector<double> pc, int num);          // 数组与自身第N项相除
+vector<double> SeriesForwardref(vector<double> pc, int ref);          // 数组右移ref位
+vector<double> SeriesAbs(vector<double> pc);                          // 绝对值
+vector<double> SeriesPowerN(vector<double> pc, int num);              // 幂函数
+vector<double> Seriessquareroot(vector<double> pc);                   // 开平方
+vector<double> SeriesReciprocal(vector<double> pc);                   // 取倒数
+vector<double> SeriesNegation(vector<double> pc);                     // 取负值
+vector<double> SeriesMax(vector<double> a, vector<double> b);          // SeriesMax(A,B)：返回 max(A[i], B[i])
+vector<double> SeriesMin(vector<double> a, vector<double> b);          // SeriesMin(A,B)：返回 min(A[i], B[i])
+vector<double> SeriesCumSum(vector<double> a);                         // 累计和，A[0..i]求和
+vector<double> SeriesDiff(vector<double> a);                           // SeriesDiff（差分）
+vector<double> SeriesReverse(vector<double> a);                        // 数组顺序翻转
+vector<double> SeriesMaxIndex(vector<double> a, int n);                // SeriesMaxIndex(A, N)：每个位置 i，返回最近 N 根中最大值位置（或距离）
+vector<double> SeriesMinIndex(vector<double> a, int n);                // SeriesMinIndex(A, N)：每个位置 i，返回最近 N 根中最小值位置（或距离）
+//+----------------------------------------------------------------------------------------------------------------+
+//| 第八部分：数组中级运算（均值、极值、方差）  【参数与输出均为正序数组】                                                       |
+//+----------------------------------------------------------------------------------------------------------------+
+vector<double> SeriesAverage(vector<double> pc, int num);              // 均线
+vector<double> SeriesXaverage(vector<double> pc, int num);             // EMA(Xaverage)
+vector<double> SeriesWAverage(vector<double> pc, int num);             // 加权移动平均线（Weighted Moving Average）
+vector<double> SeriesSmoothedAverage(vector<double> pc, int num);      // 平滑均线
+vector<double> SeriesSMA(vector<double> pc, int num, int num2);        // 指数平滑均线
+vector<double> SeriesWMA(vector<double> pc, int num);                  // 加权均线
+vector<double> SeriesHighest(vector<double> pc, int num);              // N周期最高值
+vector<double> SeriesLowest(vector<double> pc, int num);               // N周期最低值
+vector<double> SeriesWilderSmoothingMethod(vector<double> pc, int num);// Wilder平滑法
+vector<double> SeriesVariance(vector<double> pc, int num);             // 方差
+vector<double> SeriesStandardDev(vector<double> pc, int num);          // 标准差
+vector<double> SeriesTruerange();                                      // 真实波幅
+vector<double> SeriesAvgTruerange(int num);                            // ATR
+//+-----------------------------------------------------------------------------------------------------------------+
+//| 第九部分：指标函数计算  【参数与输出均为正序数组】                                                                            |
+//+-----------------------------------------------------------------------------------------------------------------+
+vector<double> SeriesRSI(vector<double> pc, int num);                            // RSI
+vector<double> SeriesKDJ_kvalue();                                               // KDJ-K值
+vector<double> SeriesKDJ_dvalue();                                               // KDJ-D值
+vector<double> SeriesKDJ_jvalue();                                               // KDJ-J值
+vector<double> SeriesMACD(vector<double> pc, int num1, int num2, int num3);      // MACD-Bar
+vector<double> SeriesMACD_diff(vector<double> pc, int num1, int num2, int num3); // MACD-DIFF
+vector<double> SeriesMACD_dea(vector<double> pc, int num1, int num2, int num3);  // MACD-DEA
+vector<double> SeriesRMS(vector<double> pc, int num);                            // 均方根
+vector<double> SeriesSuperSmoother(vector<double> pc, int num);                  // 超级平滑
+vector<double> SeriesHighpass(vector<double>pc, int num);                        // 返回Highpass(正序数组)
+vector<double> SeriesOBV();                                                      // OBV指标：能量潮(正序数组)
+//指标函数计算(结束)
+//+-----------------------------------------------------------------------------------------------------------------+
+//| 第十部分 数组高级运算函数(高等数学与统计)                                                                       |
+//+-----------------------------------------------------------------------------------------------------------------+
+vector<double>SeriesSine(vector<double> pc);                                                       // 数组元素进行正弦转化
+vector<double>SeriesPearsoncorrelationcoefficient(vector<double> pc1, vector<double>pc2, int num); // 皮尔逊相关系数计算公式
+//+-----------------------------------------------------------------------------------------------------------------+
+//| 第十一部分：跨期调用函数【参数数组为正序,返回数组也为正序】                                                                              |
+//+-----------------------------------------------------------------------------------------------------------------+
+vector<double>SeriesCrossOverPeriod(string PriceType, string periodType);                 // 返回数组形式的period期(day,min60,min30,min15,min15,min10,min5)的pricetype(close,high,low,open)相关价格数据,注意跨的周期一定要比运行周期大
+vector<double>SeriesCrossOverPeriodInst(string PriceType, string periodType, string inst); // 返回数组形式的合约(rb2510等)period期(day,min60,min30,min15,min15,min10,min5)的pricetype(close,high,low,open)相关价格数据
+//+-----------------------------------------------------------------------------------------------------------------+
+//| 第十二部分 特殊调用函数                                                      |
+//+-----------------------------------------------------------------------------------------------------------------+
+//=========================================================
+// Cross 系列（事件函数）
+// bar = 参与比较的起始位置（逆序数组）
+// bar=0 表示当前Bar
+//=========================================================
+bool CrossesAbove(vector<double> pc1, vector<double> pc2, int bar = 0);     // 上穿
+bool CrossesBelow(vector<double> pc1, vector<double> pc2, int bar = 0);     // 下穿
+bool CrossesOver(vector<double> pc1, vector<double> pc2, int bar = 0);      // 上穿别名（兼容TS）
+bool CrossesUnder(vector<double> pc1, vector<double> pc2, int bar = 0);     // 下穿别名（兼容TS）
+//+-----------------------------------------------------------------------------------------------------------------+
+//| 第十三部分：策略逻辑函数（Strategy Logic）                                                                      |
+//+-----------------------------------------------------------------------------------------------------------------+
+//=========================================================
+// 策略逻辑函数（Strategy Logic）
+// 所有输入、输出序列均采用逆序：
+// [0] = 最新Bar
+// [1] = 上一Bar
+//=========================================================
+double Ref(vector<double> pc, int ref);                                   // 返回pc数组第ref个值
+int    BarsSince(vector<double> cond);                                    // 返回距离最近一次条件成立经过多少Bar
+int    Count(vector<double> cond, int num);                               // 最近num根满足条件次数
+bool   Every(vector<double> cond, int num);                               // 最近num根是否全部满足
+bool   Exist(vector<double> cond, int num);                               // 最近num根是否存在满足条件
+double ValueWhen(vector<double> cond, vector<double> value, int occurrence = 1);// 返回最近(或第N次)条件成立对应value
+int    HHVBars(vector<double> pc, int num);                               // 最近num根最高值距离当前Bar数
+int    LLVBars(vector<double> pc, int num);                               // 最近num根最低值距离当前Bar数
+bool   Between(double value, double low, double high);                      // 判断value是否位于闭区间[low,high]
+double Abs(double value);                                                 // 返回绝对值
+
+//=========================================================
+// Greater 大于 >
+//=========================================================
+vector<double> Greater(vector<double> a, vector<double> b); // a[i] > b[i]
+vector<double> Greater(vector<double> a, double b);         // a[i] > b
+vector<double> Greater(double a, vector<double> b);         //    a > b[i]
+//=========================================================
+// Less 小于 <
+//=========================================================
+vector<double> Less(vector<double> a, vector<double> b);    // a[i] < b[i]
+vector<double> Less(vector<double> a, double b);            // a[i] < b
+vector<double> Less(double a, vector<double> b);            //    a < b[i]
+
+//=========================================================
+// GreaterEqual 大于等于 >=
+//=========================================================
+vector<double> GreaterEqual(vector<double> a, vector<double> b); // a[i] >= b[i]
+vector<double> GreaterEqual(vector<double> a, double b);         // a[i] >= b
+vector<double> GreaterEqual(double a, vector<double> b);         //    a >= b[i]
+
+//=========================================================
+// LessEqual 小于等于 <=
+//=========================================================
+vector<double> LessEqual(vector<double> a, vector<double> b);    // a[i] <= b[i]
+vector<double> LessEqual(vector<double> a, double b);            // a[i] <= b
+vector<double> LessEqual(double a, vector<double> b);            //    a <= b[i]
+
+//=========================================================
+// Equal 等于 == （采用DY_EPS浮点比较）
+//=========================================================
+vector<double> Equal(vector<double> a, vector<double> b);        // a[i] == b[i]
+vector<double> Equal(vector<double> a, double b);                // a[i] == b
+vector<double> Equal(double a, vector<double> b);                //    a == b[i]
+
+//=========================================================
+// NotEqual 不等于 != （采用DY_EPS浮点比较）
+//=========================================================
+vector<double> NotEqual(vector<double> a, vector<double> b);     // a[i] != b[i]
+vector<double> NotEqual(vector<double> a, double b);             // a[i] != b
+vector<double> NotEqual(double a, vector<double> b);             // a != b[i]
+//----------逻辑运算----------
+vector<double> And(vector<double> a, vector<double> b);      // 与 &&
+vector<double> Or(vector<double> a, vector<double> b);       // 或 ||
+vector<double> Not(vector<double> a);                        // 非 !
+vector<double> Xor(vector<double> a, vector<double> b);      // 异或 ^
+// Series数组条件判断
+// cond[i] != 0 ：返回 a[i]
+// cond[i] == 0 ：返回 b[i]
+vector<double> SeriesIff(vector<double> cond, vector<double> a, vector<double> b);
+// Series条件 + 数组 + 常数
+vector<double> SeriesIff(vector<double> cond, vector<double> a, double b);
+// Series条件 + 常数 + 数组
+vector<double> SeriesIff(vector<double> cond, double a, vector<double> b);
+//=========================================================
+// Cross 条件函数（返回条件序列）
+//=========================================================
+vector<double> CrossAbove(vector<double> a, vector<double> b);   // 上穿条件序列
+vector<double> CrossBelow(vector<double> a, vector<double> b);   // 下穿条件序列
+//+------------------------------公式指标(function)变量设计(结束)------------------------------------------------------------------------------------------------------+
