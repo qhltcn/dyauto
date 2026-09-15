@@ -1,0 +1,4353 @@
+//++---------------------------------------------------------------------外部引用文件开始（谨慎修改）----------------------------------------------------++
+#include "pch.h"
+#include "test.h"
+//++---------------------------------------------------------------------外部引用文件结束（谨慎修改）----------------------------------------------------++
+
+//++---------------------------------------------------------------------公式(function)模块(开始)）----------------------------------------------------++
+//第一类函数(常用到的基本数值计算与逻辑判断)
+// iff功能函数开始
+double test::iff(bool cond1, int num, int ref)
+{
+	double d = 0;
+	if (cond1)
+	{
+		d = num;
+	}
+	else
+	{
+		d = ref;
+	}
+	return d;
+}
+//max2(a,b)比较a,b两个数字
+double test::max2(double a, double b)
+{
+	double c = 0;
+	if (a >= b)
+	{
+		c = a;
+	}
+	else
+	{
+		c = b;
+	}
+	return c;
+}
+//max3(a,b)比较a,b,c三个数字
+double test::max3(double a, double b, double c)
+{
+	double d = (a >= b) ? a : b; //a,b中较大值
+	if (d < c) d = c;            //再与c比较
+	return d;
+}
+//min2(a,b)比较两个数字大小
+double test::min2(double a, double b)
+{
+	double c = 0;
+	if (a >= b)
+	{
+		c = b;
+	}
+	else
+	{
+		c = a;
+	}
+	return c;
+}
+//min3(a,b,c)比较三个数字大小
+double test::min3(double a, double b, double c)
+{
+	double d = (a >= b) ? b : a; //a,b中较小值
+	if (d > c) d = c;            //再与c比较
+	return d;
+}
+string test::TrimCtpField(const char* field, size_t maxLen) {
+	std::string s(field, strnlen(field, maxLen));
+
+	size_t start = s.find_first_not_of(' ');
+	if (start == std::string::npos) return "";
+	size_t end = s.find_last_not_of(' ');
+	return s.substr(start, end - start + 1);
+}
+//第一类函数(常用到的基本数值计算与逻辑判断)
+
+//第二类函数(常用到的bar数据元素调用,逆序版,适合直接做逻辑判断用)
+//数组型close价格(返回逆序数组形式,最新序列号是[0])
+vector<double> test::Close()
+{
+	vector<double>newclose;
+	newclose.clear();
+	RsqBar(sPeriod, sInst);
+	map<string, TKVALUE>::reverse_iterator it;//逆迭代
+	for (it = mapK[sPeriod][sInst].rbegin(); it != mapK[sPeriod][sInst].rend(); it++) //遍历所有K线
+	{
+		newclose.push_back(it->second.dClose);//将交易周期bar的收盘价存入newclose容器变量
+	}
+	return newclose;
+}
+//数组型open价格(返回逆序数组形式,最新序列号是[0])
+vector<double> test::Open()
+{
+	vector<double>newopen;
+	newopen.clear();
+	RsqBar(sPeriod, sInst);
+	map<string, TKVALUE>::reverse_iterator it;//逆迭代
+	for (it = mapK[sPeriod][sInst].rbegin(); it != mapK[sPeriod][sInst].rend(); it++) //遍历所有K线
+	{
+		newopen.push_back(it->second.dOpen);//将交易周期bar的开盘价存入newopen容器变量
+	}
+	return newopen;
+}
+//数组型最高价high(返回逆序数组形式,最新序列号是[0])
+vector<double> test::High()
+{
+	vector<double>newhigh;
+	newhigh.clear();
+	RsqBar(sPeriod, sInst);
+	map<string, TKVALUE>::reverse_iterator it;//逆迭代
+	for (it = mapK[sPeriod][sInst].rbegin(); it != mapK[sPeriod][sInst].rend(); it++) //遍历所有K线
+	{
+		newhigh.push_back(it->second.dHigh);//将交易周期bar的最高价存入newhigh容器变量
+	}
+	return newhigh;
+}
+//数组型最低价low(返回逆序数组形式,最新序列号是[0])
+vector<double> test::Low()
+{
+	vector<double>newlow;
+	newlow.clear();
+	RsqBar(sPeriod, sInst);
+	map<string, TKVALUE>::reverse_iterator it;//逆迭代
+	for (it = mapK[sPeriod][sInst].rbegin(); it != mapK[sPeriod][sInst].rend(); it++) //遍历所有K线
+	{
+		newlow.push_back(it->second.dLow);//将交易周期bar的最低价存入newlow容器变量
+	}
+	return newlow;
+}
+//Median 数组型(high+low)/2(返回逆序数组形式,最新序列号是[0])
+vector<double> test::Median()
+{
+	vector<double>newmedian;// 声明中间容器变量
+	newmedian.clear();
+	RsqBar(sPeriod, sInst);
+	map<string, TKVALUE>::reverse_iterator it;//逆迭代
+	for (it = mapK[sPeriod][sInst].rbegin(); it != mapK[sPeriod][sInst].rend(); it++) //遍历所有K线
+	{
+		newmedian.push_back((it->second.dHigh + it->second.dLow) / 2);//将当根bar的(high+low)/2 存入新容器变量
+	}
+	return newmedian;
+}
+//数组型(high+low+open+close)*0.25(返回逆序数组形式,最新序列号是[0])
+vector<double> test::AvgPrice()
+{
+	vector<double>newv;
+	newv.clear();
+	RsqBar(sPeriod, sInst);
+	map<string, TKVALUE>::reverse_iterator it;//逆迭代
+	for (it = mapK[sPeriod][sInst].rbegin(); it != mapK[sPeriod][sInst].rend(); it++) //遍历所有K线
+	{
+		newv.push_back((it->second.dHigh + it->second.dLow + it->second.dOpen + it->second.dClose) * 0.25);//将当根bar的(high+low + open + close)/4 存入新容器变量
+	}
+	return newv;
+}
+//典型价格数组型(high+low+close)/3(返回逆序数组形式,最新序列号是[0])
+vector<double> test::TypicalPrice()
+{
+	vector<double>newv;
+	newv.clear();
+	RsqBar(sPeriod, sInst);
+	map<string, TKVALUE>::reverse_iterator it;//逆迭代
+	for (it = mapK[sPeriod][sInst].rbegin(); it != mapK[sPeriod][sInst].rend(); it++) //遍历所有K线
+	{
+		newv.push_back((it->second.dHigh + it->second.dLow + it->second.dClose) / 3);//将当根bar的(high+low+close)/3 存入新容器变量
+	}
+	return newv;
+}
+//数组型持仓量(返回逆序数组形式,最新序列号是[0])
+vector<double> test::OpenInterest()
+{
+	vector<double>newOpenInterest;
+	newOpenInterest.clear();
+	RsqBar(sPeriod, sInst);
+	map<string, TKVALUE>::reverse_iterator it;//逆迭代
+	for (it = mapK[sPeriod][sInst].rbegin(); it != mapK[sPeriod][sInst].rend(); it++) //遍历所有K线
+	{
+		newOpenInterest.push_back(it->second.nOpenInterest);//将当根bar的持仓量存入新容器变量
+	}
+	return newOpenInterest;
+}
+//数组型成交量(返回逆序数组形式, 最新序列号是[0])
+vector<double> test::Volume()
+{
+	vector<double>newvolume;
+	newvolume.clear();
+	RsqBar(sPeriod, sInst);
+	map<string, TKVALUE>::reverse_iterator it;//逆迭代
+	for (it = mapK[sPeriod][sInst].rbegin(); it != mapK[sPeriod][sInst].rend(); it++) //遍历所有K线
+	{
+		newvolume.push_back(it->second.nVolume);//将当根bar的成交量存入新容器变量
+	}
+	return newvolume;
+}
+//+---------------------------------------------------------+
+//|字符型时间(逆序,最新值为time[0]),返回范例：10:09:00      | 
+//+---------------------------------------------------------+
+vector<string> test::Time()
+{
+	vector<string>newtime;
+	newtime.clear();
+	RsqBar(sPeriod, sInst);
+	map<string, TKVALUE>::reverse_iterator it;//逆迭代
+	for (it = mapK[sPeriod][sInst].rbegin(); it != mapK[sPeriod][sInst].rend(); it++) //遍历所有K线
+	{
+		newtime.push_back(it->second.sTime);//将当根bar的时间存入新容器变量
+	}
+	return newtime;
+}
+//+---------------------------------------------------------+
+//|字符型日期(逆序,最新值为date[0])，返回范例：2025/07/18   | 
+//+---------------------------------------------------------+
+vector<string> test::Date()
+{
+	vector<string>newdate;
+	newdate.clear();
+	RsqBar(sPeriod, sInst);
+	map<string, TKVALUE>::reverse_iterator it;//逆迭代
+	for (it = mapK[sPeriod][sInst].rbegin(); it != mapK[sPeriod][sInst].rend(); it++) //遍历所有K线
+	{
+		newdate.push_back(it->second.sDate);//将当根bar的日期存入新容器变量
+	}
+	return newdate;
+}
+
+//第二类函数(常用到的bar数据元素调用,逆序版,适合直接做逻辑判断用)
+
+//第三类函数(常用到的bar数据元素计算函数,数值型，适合直接做逻辑判断用)
+double test::SummationFC(string period, string inst, string Pricetype, int num)
+{
+	if (num <= 0)return 0;
+	double sum = 0;//声明一个临时存储和的变量
+	int n = 0;//声明一个统计循环次数的临时变量
+	RsqBar(period, inst);//调用数据
+	if (mapK[period][inst].empty())return 0;// 调用失败返回0
+	map<string, TKVALUE>::reverse_iterator it;
+	for (it = mapK[period][inst].rbegin(); it != mapK[period][inst].rend(); ++it)
+	{
+		if (Pricetype == "close")sum = sum + it->second.dClose;//收盘价加总
+		else if (Pricetype == "high")sum = sum + it->second.dHigh;//收盘价加总
+		else if (Pricetype == "low")sum = sum + it->second.dLow;//收盘价加总
+		else if (Pricetype == "open")sum = sum + it->second.dOpen;//收盘价加总
+		n++;
+		if (n >= num)break; //当循环次数n大于等于num时跳出循环(如果bar的数目小时num周期,就按有多少bar就计算多少bar的)
+	}
+	return sum;
+}
+//均线average计算公式开始
+double test::AverageFC(string period, string inst, string Pricetype, int num)
+{
+	if (num <= 0)return 0;
+	double d = 0;
+	int n = 0;
+	RsqBar(period, inst);//调用数据
+	if (mapK[period][inst].empty())return 0;// 调用失败返回0
+	map<string, TKVALUE>::reverse_iterator it;
+	for (it = mapK[period][inst].rbegin(); it != mapK[period][inst].rend(); ++it)
+	{
+		if (Pricetype == "close")d += it->second.dClose;
+		else if (Pricetype == "high")d += it->second.dHigh;
+		else if (Pricetype == "low")d += it->second.dLow;
+		else if (Pricetype == "open")d += it->second.dOpen;
+		else d += it->second.dClose;
+		n++;
+		if (n >= num)break;
+	}
+	if (n == 0)return 0;
+	return d / n;
+}
+//均线average[1]计算公式开始
+double test::AveragerefFC(string period, string inst, string Pricetype, int num, int ref)
+{
+	if (num <= 0 || ref < 0)return 0;
+	double d = 0;
+	int n = 0;
+	int r = 0;
+	RsqBar(period, inst);//调用数据
+	if (mapK[period][inst].empty())return 0;// 调用失败返回0
+	map<string, TKVALUE>::reverse_iterator it;
+	for (it = mapK[period][inst].rbegin(); it != mapK[period][inst].rend(); ++it)
+	{
+		r++;
+		if (r <= ref)continue;
+		if (Pricetype == "close")d += it->second.dClose;
+		else if (Pricetype == "high")d += it->second.dHigh;
+		else if (Pricetype == "low")d += it->second.dLow;
+		else if (Pricetype == "open")d += it->second.dOpen;
+		else d += it->second.dClose;
+		n++;
+		if (n >= num)break;
+	}
+	if (n == 0)return 0;
+	return d / n;
+}
+//最高价highest计算公式开始
+double test::HighestFC(string period, string inst, string Pricetype, int num)
+{
+	if (num <= 0)return 0;
+	double d = 0;
+	int n = 0;
+	bool inited = false; //标记是否已用第一个有效值初始化d
+	RsqBar(period, inst);//调用数据
+	if (mapK[period][inst].empty())return 0;// 调用失败返回0
+	map<string, TKVALUE>::reverse_iterator it;
+	for (it = mapK[period][inst].rbegin(); it != mapK[period][inst].rend(); ++it)
+	{
+		double v = 0;
+		if (Pricetype == "close")v = it->second.dClose;
+		else if (Pricetype == "high")v = it->second.dHigh;
+		else if (Pricetype == "low")v = it->second.dLow;
+		else if (Pricetype == "open")v = it->second.dOpen;
+		else v = it->second.dClose;
+		if (!inited) { d = v; inited = true; } //第一次进入用当前值初始化,不依赖硬编码常数
+		else { d = max2(d, v); }
+
+		n++;
+		if (n >= num)break; //当循环次数n大于等于num时跳出循环
+	}
+	if (!inited)return 0;
+	return d;
+}
+//最高价highest[1]计算公式开始
+double test::HighestrefFC(string period, string inst, string Pricetype, int num, int ref)
+{
+	if (num <= 0 || ref < 0)return 0;
+	double d = 0;
+	int n = 0;
+	int r = 0;
+	bool inited = false;
+	RsqBar(period, inst);//调用数据
+	if (mapK[period][inst].empty())return 0;// 调用失败返回0
+	map<string, TKVALUE>::reverse_iterator it;
+	for (it = mapK[period][inst].rbegin(); it != mapK[period][inst].rend(); ++it)
+	{
+		r++;
+		if (r <= ref)continue; //跳过最近ref根bar
+		double v = 0;
+		if (Pricetype == "close")v = it->second.dClose;
+		else if (Pricetype == "high")v = it->second.dHigh;
+		else if (Pricetype == "low")v = it->second.dLow;
+		else if (Pricetype == "open")v = it->second.dOpen;
+		else v = it->second.dClose;
+		if (!inited) { d = v; inited = true; }
+		else { d = max2(d, v); }
+
+		n++;
+		if (n >= num)break;
+	}
+	if (!inited)return 0;
+	return d;
+}
+//最低价lowest计算公式
+double test::LowestFC(string period, string inst, string Pricetype, int num)
+{
+	if (num <= 0)return 0;
+	double d = 0;
+	int n = 0;
+	bool inited = false;
+	RsqBar(period, inst);//调用数据
+	if (mapK[period][inst].empty())return 0;// 调用失败返回0
+	map<string, TKVALUE>::reverse_iterator it;
+	for (it = mapK[period][inst].rbegin(); it != mapK[period][inst].rend(); ++it)
+	{
+		double v = 0;
+		if (Pricetype == "close")v = it->second.dClose;
+		else if (Pricetype == "high")v = it->second.dHigh;
+		else if (Pricetype == "low")v = it->second.dLow;
+		else if (Pricetype == "open")v = it->second.dOpen;
+		else v = it->second.dClose;
+		if (!inited) { d = v; inited = true; }
+		else { d = min2(d, v); }
+
+		n++;
+		if (n >= num)break;
+	}
+	if (!inited)return 0;
+	return d;
+}
+//最低价lowest[1]计算公式开始
+double test::LowestrefFC(string period, string inst, string Pricetype, int num, int ref)
+{
+	if (num <= 0 || ref < 0)return 0;
+	double d = 0;
+	int n = 0;
+	int r = 0;
+	bool inited = false;
+	RsqBar(period, inst);//调用数据
+	if (mapK[period][inst].empty())return 0;// 调用失败返回0
+	map<string, TKVALUE>::reverse_iterator it;
+	for (it = mapK[period][inst].rbegin(); it != mapK[period][inst].rend(); ++it)
+	{
+		r++;
+		if (r <= ref)continue;
+		double v = 0;
+		if (Pricetype == "close")v = it->second.dClose;
+		else if (Pricetype == "high")v = it->second.dHigh;
+		else if (Pricetype == "low")v = it->second.dLow;
+		else if (Pricetype == "open")v = it->second.dOpen;
+		else v = it->second.dClose;
+		if (!inited) { d = v; inited = true; }
+		else { d = min2(d, v); }
+
+		n++;
+		if (n >= num)break;
+	}
+	if (!inited)return 0;
+	return d;
+}
+//ATR,averagetruerange计算公式开始
+double test::AvgtruerangeFC(string period, string inst, int num)
+{
+	if (num <= 0)return 0;
+	double dPreClose = 0;
+	double sumatr = 0;
+	vector<double>vAtr;
+	RsqBar(period, inst);//调用数据
+	if (mapK[period][inst].empty())return 0;// 调用失败返回0
+	map<string, TKVALUE >::iterator it;
+	for (it = mapK[period][inst].begin(); it != mapK[period][inst].end(); ++it)
+	{
+		if (dPreClose != 0)
+		{
+			double d = it->second.dHigh - it->second.dLow;
+			double dHC = abs(it->second.dHigh - dPreClose);
+			double dLC = abs(it->second.dLow - dPreClose);
+			if (d < dHC)d = dHC;
+			if (d < dLC)d = dLC;
+			vAtr.push_back(d);
+		}
+		dPreClose = it->second.dClose;
+	}
+	if ((int)vAtr.size() < num) return 0; //用真实参与计算的TR数组长度做检查
+
+	for (int i = 1; i <= num; i++)
+	{
+		sumatr += vAtr[vAtr.size() - i];
+	}
+	return  sumatr / num;
+}
+
+//布林带(bollingerbands)开始
+double test::BollingerbandsFC(string period, string inst, int num, int numDevs)
+{
+	if (num <= 0 || numDevs < 0)return 0;
+	double avg1 = AverageFC(period, inst, "close", num);//中间均线
+	int n = 0;
+	double sumdev = 0;
+	double madev = 0;
+	if ((int)mapK[period][inst].size() < num) return 0;
+	RsqBar(period, inst);//调用数据
+	if (mapK[period][inst].empty())return 0;// 调用失败返回0
+	map<string, TKVALUE>::reverse_iterator it;
+	for (it = mapK[period][inst].rbegin(); it != mapK[period][inst].rend(); ++it)
+	{
+		sumdev += pow(it->second.dClose - avg1, 2);
+		n++;
+		if (n >= num)break;
+	}
+	madev = sqrt(sumdev / num);
+	return avg1 + numDevs * madev;
+}
+
+//方差计算公式开始
+double test::VarianceFC(string period, string inst, int num)
+{
+	if (num <= 0)return 0;
+	double avg1 = AverageFC(period, inst, "close", num);//中间均线
+	int n = 0;
+	double sumdev = 0;
+	double madev = 0;
+	if (mapK[period][inst].size() < num) return 0;
+	RsqBar(period, inst);//调用数据
+	if (mapK[period][inst].empty())return 0;// 调用失败返回0
+	map<string, TKVALUE>::reverse_iterator it;
+	for (it = mapK[period][inst].rbegin(); it != mapK[period][inst].rend(); ++it)
+	{
+		sumdev += pow(it->second.dClose - avg1, 2); //偏离平方加总
+		n++;
+		if (n >= num)break;
+	}
+	if (n == 0)return 0;
+	return sumdev / n;
+}
+
+// 方差计算公式结束
+//标准差计算公式开始
+double test::StandardDevFC(string period, string inst, int num)
+{
+	if (num <= 0)return 0;
+	double value1 = 0;
+	if (mapK[period][inst].size() < num) return 0;
+	value1 = VarianceFC(period, inst, num);
+	return sqrt(value1);
+}
+// 标准差计算公式结束
+
+//xaverage计算公式(跟下面ema函数为同一函数,方便大家偏好)
+double test::XaverageFC(string period, string inst, int num)
+{
+	if (num <= 0)return 0;
+	double d = 0;
+	int r = 0;
+	RsqBar(period, inst);//调用数据
+	if (mapK[period][inst].empty())return 0;// 调用失败返回0
+	map<string, TKVALUE >::iterator it;
+	for (it = mapK[period][inst].begin(); it != mapK[period][inst].end(); ++it)
+	{
+		if (r < num)//当数据不够num个bar时用总和/(bar个数加1)
+		{
+			d = (d + it->second.dClose) / ((double)r + 1);
+			r++;
+		}
+		else //当bar的总个数大于num个周期时,ema = a*close + (1-a)*ema[1],a一般为2/(num+1)
+		{
+			d = (2 * it->second.dClose + ((double)num - 1) * d) / ((double)num + 1);
+		}
+	}
+	return d;
+}
+
+// EMA：与XaverageFC为同一函数, 仅命名不同, 兼容国内通达信等软件函数规范习惯
+double test::EmaFC(string period, string inst, int num)
+{
+	if (num <= 0)return 0;
+	return XaverageFC(period, inst, num);
+}
+//获得close[ref]值
+double test::CloserefFC(string period, string inst, int ref)
+{
+	if (ref < 0)return 0;
+	double d = 0;
+	int r = 0;
+	RsqBar(period, inst);
+	if (mapK[period][inst].empty())return 0;// 调用失败返回0
+	map<string, TKVALUE>::reverse_iterator it;
+	for (it = mapK[period][inst].rbegin(); it != mapK[period][inst].rend(); it++)
+	{
+		r++;
+		if (r <= ref)continue;
+		d = it->second.dClose;
+		break;
+	}
+	return d;
+}
+
+//获得open[ref]值
+double test::OpenrefFC(string period, string inst, int ref)
+{
+	if (ref < 0)return 0;
+	double d = 0;
+	int r = 0;
+	RsqBar(period, inst);
+	if (mapK[period][inst].empty())return 0;// 调用失败返回0
+	map<string, TKVALUE>::reverse_iterator it;
+	for (it = mapK[period][inst].rbegin(); it != mapK[period][inst].rend(); it++)
+	{
+		r++;
+		if (r <= ref)continue;
+		d = it->second.dOpen;
+		break;
+	}
+	return d;
+}
+//获得high[ref]值
+double test::HighrefFC(string period, string inst, int ref)
+{
+	if (ref < 0)return 0;
+	double d = 0;
+	int r = 0;
+	RsqBar(period, inst);
+	if (mapK[period][inst].empty())return 0;// 调用失败返回0
+	map<string, TKVALUE>::reverse_iterator it;
+	for (it = mapK[period][inst].rbegin(); it != mapK[period][inst].rend(); it++)
+	{
+		r++;
+		if (r <= ref)continue;
+		d = it->second.dHigh;
+		break;
+	}
+	return d;
+}
+//获得low[ref]值
+double test::LowrefFC(string period, string inst, int ref)
+{
+	if (ref < 0)return 0;
+	double d = 0;
+	int r = 0;
+	RsqBar(period, inst);
+	if (mapK[period][inst].empty())return 0;// 调用失败返回0
+	map<string, TKVALUE>::reverse_iterator it;
+	for (it = mapK[period][inst].rbegin(); it != mapK[period][inst].rend(); it++)
+	{
+		r++;
+		if (r <= ref)continue;
+		d = it->second.dLow;
+		break;
+	}
+	return d;
+}
+// macd计算公式(数值版,返回最新MACD柱值)
+// 算法与SeriesMACD(数组版)保持一致: diff=EMA(close,num1)-EMA(close,num2), dea=EMA(diff,num3), macd=(diff-dea)*2
+double test::Macd(string period, string inst, int num1, int num2, int num3)
+{
+	if (num1 <= 0 || num2 <= 0 || num3 <= 0)return 0;
+	vector<double> closeSeries = SeriesClose(); //取得该period/inst下的收盘价正序数组
+	if (closeSeries.empty()) return 0;
+	vector<double> ema1 = SeriesXaverage(closeSeries, num1); //短周期EMA,如12
+	vector<double> ema2 = SeriesXaverage(closeSeries, num2); //长周期EMA,如26
+	if (closeSeries.empty()) return 0;
+	vector<double> diff = SeriesMinus(ema1, ema2);            //diff = ema1 - ema2
+	vector<double> dea = SeriesXaverage(diff, num3);          //dea = ema(diff, num3),注意是对diff做平滑,不是对close
+	if (diff.empty() || dea.empty()) return 0;
+	return (diff.back() - dea.back()) * 2; //取最新一项,即macd柱值
+}
+//自适应移动平均线（Adaptive Exponential Moving Average,AEMA）返回数值模式
+double test::Aema(string period, string inst, int num, int pds)//自适应移动平均线（Adaptive Exponential Moving Average, AEMA）
+{
+	if (length <= 0 || pds <= 0)return 0;
+
+	RsqBar(period, inst);
+
+	if ((int)mapK[period][inst].size() < pds)return 0;
+
+	vector<double> High;
+	vector<double> Low;
+	vector<double> Close;
+
+	map<string, TKVALUE>::iterator it;
+
+	for (it = mapK[period][inst].begin();
+		it != mapK[period][inst].end();
+		++it)
+	{
+		High.push_back(it->second.dHigh);
+		Low.push_back(it->second.dLow);
+		Close.push_back(it->second.dClose);
+	}
+
+	double ema = Close[0];
+
+	double alpha0 = 2.0 / (length + 1);
+
+	for (int i = 1; i < (int)Close.size(); i++)
+	{
+		int start = i - pds + 1;
+
+		if (start < 0)
+			start = 0;
+
+		double hh = High[start];
+		double ll = Low[start];
+
+		for (int j = start + 1; j <= i; j++)
+		{
+			if (High[j] > hh)
+				hh = High[j];
+
+			if (Low[j] < ll)
+				ll = Low[j];
+		}
+
+		double adaptive = 0;
+
+		if (hh != ll)
+		{
+			adaptive = fabs((Close[i] - ll) - (hh - Close[i])) / (hh - ll);
+		}
+
+		double alpha = (1.0 + adaptive) * alpha0;
+
+		ema = ema + alpha * (Close[i] - ema);
+	}
+
+	return ema;
+}
+//返回PivotFC high数值(数值型)
+double test::PivotHighFC(vector<double> pc, int leftbars, int rightbars, int currentIndex)
+{
+	if (pc.empty())return -1;
+	if (currentIndex < 0)return -1;
+	if (currentIndex >= (int)pc.size())return -1;
+	if (leftbars <= 0 || rightbars <= 0)return -1;
+
+	double CurrentPrice = pc[currentIndex];//定位比较基准
+
+	// 边界检查(检查1)
+	if (currentIndex < leftbars || (double)currentIndex + rightbars >= pc.size())
+	{
+		return -1;
+	}
+	//检查左侧条件		
+	for (size_t i = 1; i <= leftbars; i++)
+	{
+		if (pc[currentIndex - i] >= CurrentPrice) //price[i]小于左侧N个值中的任意个则返回-1.即price[i]必须比左边leftgbars个数值都要大才行
+		{
+			return -1;
+		}
+	}
+	//检查右侧条件
+	for (int k = 1; k <= rightbars; k++)
+	{
+		if (pc[(double)currentIndex + k] >= CurrentPrice) //price[i]小于右侧N个值中的任意个则返回-1.即price[i]必须比右边rightbars个数值都要大才行
+		{
+			return -1;
+		}
+	}
+	return CurrentPrice;//经过上面层层筛选仍然没有返回-1 说明是最高的那个bar,则返回这个bar的价格
+}
+//返回PivotFC low数值(数值型)
+double test::PivotLowFC(vector<double> pc, int leftbars, int rightbars, int currentIndex)
+{
+	if (pc.empty())return -1;
+	if (currentIndex < 0)return -1;
+	if (currentIndex >= (int)pc.size())return -1;
+	if (leftbars <= 0 || rightbars <= 0)return -1;
+
+	double CurrentPrice = pc[currentIndex];//定位比较基准
+
+	// 边界检查(检查1)
+	if ((double)currentIndex < leftbars || (double)currentIndex + rightbars >= pc.size())
+	{
+		return -1;
+	}
+
+	//检查左侧条件		
+	for (size_t i = 1; i <= leftbars; i++)
+	{
+		if (pc[currentIndex - i] <= CurrentPrice) //price[i]大于左侧N个值中的任意个则返回-1.即price[i]必须比左边leftgbars个数值都要小才行
+		{
+			return -1;
+		}
+	}
+	//检查右侧条件
+	for (int k = 1; k <= rightbars; k++)
+	{
+		if (pc[(double)currentIndex + k] <= CurrentPrice) //price[i]大于右侧N个值中的任意个则返回-1.即price[i]必须比右边rightbars个数值都要小才行
+		{
+			return -1;
+		}
+	}
+	return CurrentPrice;//经过上面层层筛选仍然没有返回-1 说明是最高的那个bar,则返回这个bar的价格
+}
+//返回SwingHigh数值(数值型)
+double test::SwingHighFC(vector<double> pc, int leftbars, int rightbars, int ref)
+{
+	if (pc.empty())return -1;
+	if (ref < 0)return -1;
+	if (ref >= pc.size())return -1;
+
+	for (size_t i = pc.size() - ref; i < pc.size() - rightbars; i++)
+	{
+		double sh = PivotHighFC(pc, leftbars, rightbars, i);
+		if (sh != -1) return sh;
+	}
+	return -1;
+}
+//返回SwingHigh数值所在bar的标号(数值)
+double test::SwingHighBarFC(vector<double> pc, int leftbars, int rightbars, int ref)
+{
+	for (size_t i = pc.size() - ref; i < pc.size() - rightbars; i++)
+	{
+		double sh = PivotHighFC(pc, leftbars, rightbars, i);
+		if (sh != -1) return i;
+	}
+	return -1;
+}
+//返回SwingLow数值(数值型)
+double test::SwingLowFC(vector<double> pc, int leftbars, int rightbars, int ref)
+{
+	if (pc.empty())return -1;
+	if (ref < 0)return -1;
+	if (ref >= pc.size())return -1;
+	for (size_t i = pc.size() - ref; i < pc.size() - rightbars; i++)
+	{
+		double sh = PivotLowFC(pc, leftbars, rightbars, i);
+		if (sh != -1) return sh;
+	}
+	return -1;
+}
+//返回SwingLow数值所在bar的标号(数值)
+double test::SwingLowBarFC(vector<double> pc, int leftbars, int rightbars, int ref)
+{
+	for (size_t i = pc.size() - ref; i < pc.size() - rightbars; i++)
+	{
+		double sh = PivotLowFC(pc, leftbars, rightbars, i);
+		if (sh != -1) return i;
+	}
+	return -1;
+}
+//返回均方根(Root Mean Square,RMS)(数值型)
+double test::RmsFC(vector<double> pc, int num)
+{
+	if (num <= 0)return 0;
+	if (num > (int)pc.size())return 0;
+	double	Sum = 0;
+	double  RMS = 0;
+
+	for (size_t i = 0; i < num; i++)
+	{
+		Sum = Sum + pc[i] * pc[i];
+	}
+	if (Sum != 0) RMS = sqrt(Sum / num);
+	return RMS;
+}
+//线性回归预测值(数值型)
+//+----------------------------------------------------------------+
+//|Price：价格序列 (如 Close)                                      |
+//|Length：回归计算的周期数                                        |
+//|Offset：要取的点（通常 0 表示当前 bar，1 表示前一个 bar，等等） |
+//|LinearRegValue(Price, Length, Offset)                           |
+//+----------------------------------------------------------------+
+double test::LinearRegressionFC(vector<double> pc, int num, int ref)
+{
+	if (num <= 1)return 0;
+	if (ref < 0)return 0;
+	reverse(pc.begin(), pc.end());   //将数组顺序转为正常顺序
+	int size = pc.size();
+	if (size < num + ref) {
+		Print("数据长度不足");
+		return 0;
+	}
+
+	// 回归区间： [start, end]
+	int end = size - 1 - ref;
+	int start = end - num + 1;
+
+	// X 序列：0,1,2,...,length-1
+	double sumX = 0.0, sumY = 0.0, sumXY = 0.0, sumX2 = 0.0;
+	for (int i = 0; i < num; i++) {
+		double x = i;
+		double y = pc[(double)start + i];
+		sumX += x;
+		sumY += y;
+		sumXY += x * y;
+		sumX2 += x * x;
+	}
+
+	double denominator = num * sumX2 - sumX * sumX;
+	if (denominator == 0.0)
+	{
+		throw runtime_error("除零错误");
+	}
+
+	// 线性回归系数
+	double slope = (num * sumXY - sumX * sumY) / denominator;
+	double intercept = (sumY - slope * sumX) / num;
+
+	// 当前bar对应的x
+	double xVal = (double)num - 1;
+	return intercept + slope * xVal;
+}
+//线性回归预测值角度(角度数值型)
+double test::LinearRegressionFC_slope(vector<double> pc, int num, int ref)
+{
+	if (num <= 1)return 0;
+	if (ref < 0)return 0;
+	reverse(pc.begin(), pc.end());   //将数组顺序转为正常顺序
+	int size = pc.size();
+	if (size < num + ref) {
+		Print("数据长度不足");
+		return 0;
+	}
+
+	// 回归区间： [start, end]
+	int end = size - 1 - ref;
+	int start = end - num + 1;
+
+	// X 序列：0,1,2,...,length-1
+	double sumX = 0.0, sumY = 0.0, sumXY = 0.0, sumX2 = 0.0;
+	for (int i = 0; i < num; i++) {
+		double x = i;
+		double y = pc[(double)start + i];
+		sumX += x;
+		sumY += y;
+		sumXY += x * y;
+		sumX2 += x * x;
+	}
+
+	double denominator = num * sumX2 - sumX * sumX;
+	if (denominator == 0.0)
+	{
+		throw runtime_error("除零错误");
+	}
+
+	// 线性回归系数
+	double slope = (num * sumXY - sumX * sumY) / denominator;
+	double intercept = (sumY - slope * sumX) / num;
+
+	// 当前bar对应的值
+	return slope;
+}
+//线性回归预测值(截距数值型)
+double test::LinearRegressionFC_intercept(vector<double> pc, int num, int ref)
+{
+	if (num <= 1)return 0;
+	if (ref < 0)return 0;
+	reverse(pc.begin(), pc.end());   //将数组顺序转为正常顺序
+	int size = pc.size();
+	if (size < num + ref) {
+		Print("数据长度不足");
+		return 0;
+	}
+
+	// 回归区间： [start, end]
+	int end = size - 1 - ref;
+	int start = end - num + 1;
+
+	// X 序列：0,1,2,...,length-1
+	double sumX = 0.0, sumY = 0.0, sumXY = 0.0, sumX2 = 0.0;
+	for (int i = 0; i < num; i++) {
+		double x = i;
+		double y = pc[(double)start + i];
+		sumX += x;
+		sumY += y;
+		sumXY += x * y;
+		sumX2 += x * x;
+	}
+
+	double denominator = num * sumX2 - sumX * sumX;
+	if (denominator == 0.0)
+	{
+		throw runtime_error("除零错误");
+	}
+
+	// 线性回归系数
+	double slope = (num * sumXY - sumX * sumY) / denominator;
+	double intercept = (sumY - slope * sumX) / num;
+
+	// 当前bar对应的值
+	return intercept;
+}
+//第三类函数(常用到的bar数据元素计算函数,逆序版，适合直接做逻辑判断用)
+
+//第四类函数(常用到的bar数据元素计算函数,正序版，适合做中间变量计算用)
+//数组型close价格(返回正序数组形式)
+vector<double> test::SeriesClose()
+{
+	vector<double>newclose;
+	RsqBar(sPeriod, sInst);
+	if (mapK[sPeriod][sInst].empty())return vector<double>();
+	map<string, TKVALUE>::iterator it;//迭代
+	for (it = mapK[sPeriod][sInst].begin(); it != mapK[sPeriod][sInst].end(); it++) //遍历所有K线
+	{
+		newclose.push_back(it->second.dClose);//将交易周期bar的收盘价存入newclose容器变量
+	}
+	return newclose;
+}
+//数组型open价格(返回正序数组形式)
+vector<double> test::SeriesOpen()
+{
+	vector<double>newopen;
+	RsqBar(sPeriod, sInst);
+	if (mapK[sPeriod][sInst].empty())return vector<double>();
+	map<string, TKVALUE>::iterator it;//迭代
+	for (it = mapK[sPeriod][sInst].begin(); it != mapK[sPeriod][sInst].end(); it++) //遍历所有K线
+	{
+		newopen.push_back(it->second.dOpen);//将交易周期bar的收盘价存入newopen容器变量
+	}
+	return newopen;
+}
+//数组型最高价high(返回正序数组形式)
+vector<double> test::SeriesHigh()
+{
+	vector<double>newhigh;
+	RsqBar(sPeriod, sInst);
+	if (mapK[sPeriod][sInst].empty())return vector<double>();
+	map<string, TKVALUE>::iterator it;//迭代
+	for (it = mapK[sPeriod][sInst].begin(); it != mapK[sPeriod][sInst].end(); it++) //遍历所有K线
+	{
+		newhigh.push_back(it->second.dHigh);//将交易周期bar的最高价存入newhigh容器变量
+	}
+	return newhigh;
+}
+
+//数组型最低价low(返回正序数组形式)
+vector<double> test::SeriesLow()
+{
+	vector<double>newlow;
+	RsqBar(sPeriod, sInst);
+	if (mapK[sPeriod][sInst].empty())return vector<double>();
+	map<string, TKVALUE>::iterator it;//迭代
+	for (it = mapK[sPeriod][sInst].begin(); it != mapK[sPeriod][sInst].end(); it++) //遍历所有K线
+	{
+		newlow.push_back(it->second.dLow);//将交易周期bar的最低价存入newlow容器变量
+	}
+	return newlow;
+}
+
+//Median 数组型(high+low)/2(返回正序数组形式)
+vector<double> test::SeriesMedian()
+{
+	vector<double>newmedian;// 声明中间容器变量
+	RsqBar(sPeriod, sInst);
+	if (mapK[sPeriod][sInst].empty())return vector<double>();
+	map<string, TKVALUE>::iterator it;//迭代
+	for (it = mapK[sPeriod][sInst].begin(); it != mapK[sPeriod][sInst].end(); it++) //遍历所有K线
+	{
+		newmedian.push_back((it->second.dHigh + it->second.dLow) / 2);//将当根bar的(high+low)/2 存入新容器变量
+	}
+	return newmedian;
+}
+
+//数组型(high+low+open+close)*0.25(返回正序数组形式)
+vector<double> test::SeriesAvgPrice()
+{
+	vector<double>newv;
+	RsqBar(sPeriod, sInst);
+	if (mapK[sPeriod][sInst].empty())return vector<double>();
+	map<string, TKVALUE>::iterator it;//迭代
+	for (it = mapK[sPeriod][sInst].begin(); it != mapK[sPeriod][sInst].end(); it++) //遍历所有K线
+	{
+		newv.push_back((it->second.dHigh + it->second.dLow + it->second.dOpen + it->second.dClose) * 0.25);//将当根bar的(high+low)/2 存入新容器变量
+	}
+	return newv;
+}
+//典型价格数组型(high+low+close)/3(返回正序数组形式)
+vector<double> test::SeriesTypicalPrice()
+{
+	vector<double>newv;
+	RsqBar(sPeriod, sInst);
+	if (mapK[sPeriod][sInst].empty())return vector<double>();
+	map<string, TKVALUE>::iterator it;//迭代
+	for (it = mapK[sPeriod][sInst].begin(); it != mapK[sPeriod][sInst].end(); it++) //遍历所有K线
+	{
+		newv.push_back((it->second.dHigh + it->second.dLow + it->second.dClose) / 3);//将当根bar的(high+low+close)/3 存入新容器变量
+	}
+	return newv;
+}
+//数组型持仓量(返回正序数组形式)
+vector<double> test::SeriesOpenInterest()
+{
+	vector<double>newOpenInterest;
+	RsqBar(sPeriod, sInst);
+	if (mapK[sPeriod][sInst].empty())return vector<double>();
+	map<string, TKVALUE>::iterator it;//迭代
+	for (it = mapK[sPeriod][sInst].begin(); it != mapK[sPeriod][sInst].end(); it++) //遍历所有K线
+	{
+		newOpenInterest.push_back(it->second.nOpenInterest);//将当根bar的持仓量存入新容器变量
+	}
+	return newOpenInterest;
+}
+//数组型成交量(返回正序数组形式)
+vector<double> test::SeriesVolume()
+{
+	vector<double>newvolume;
+	RsqBar(sPeriod, sInst);
+	if (mapK[sPeriod][sInst].empty())return vector<double>();
+	map<string, TKVALUE>::iterator it;//迭代
+	for (it = mapK[sPeriod][sInst].begin(); it != mapK[sPeriod][sInst].end(); it++) //遍历所有K线
+	{
+		newvolume.push_back(it->second.nVolume);//将当根bar的成交量存入新容器变量
+	}
+	return newvolume;
+}
+//+---------------------------------------------------------+
+//|字符型时间(正序,第一个值为time[0]),返回范例：10:09:00      | 
+//+---------------------------------------------------------+
+vector<string> test::SeriesTime()
+{
+	vector<string>newtime;
+	newtime.clear();
+	RsqBar(sPeriod, sInst);
+	map<string, TKVALUE>::iterator it;//正迭代
+	for (it = mapK[sPeriod][sInst].begin(); it != mapK[sPeriod][sInst].end(); it++) //遍历所有K线
+	{
+		newtime.push_back(it->second.sTime);//将当根bar的时间存入新容器变量
+	}
+	return newtime;
+}
+//+---------------------------------------------------------+
+//|字符型日期(正序,最左值为date[0])，返回范例：2025/07/18   | 
+//+---------------------------------------------------------+
+vector<string> test::SeriesDate()
+{
+	vector<string>newdate;
+	newdate.clear();
+	RsqBar(sPeriod, sInst);
+	map<string, TKVALUE>::iterator it;//逆迭代
+	for (it = mapK[sPeriod][sInst].begin(); it != mapK[sPeriod][sInst].end(); it++) //遍历所有K线
+	{
+		newdate.push_back(it->second.sDate);//将当根bar的日期存入新容器变量
+	}
+	return newdate;
+}
+//第四类函数(常用到的bar数据元素计算函数,正序版，适合做中间变量计算用)
+
+//第五类函数(常用到的基本计算函数,逆序版，适合直接做逻辑判断用)
+//数组前NUM项元素加总计算(返回逆序数组形式,最新序列号是[0])
+vector<double> test::Summation(vector<double> pc, int num)
+{
+	reverse(pc.begin(), pc.end());
+	vector<double> sumvector;
+	if (num <= 0)return sumvector;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		double sum = 0;
+
+		if ((int)i + 1 < num)
+		{
+			for (size_t j = 0; j <= i; j++)
+				sum += pc[i - j];
+		}
+		else
+		{
+			for (int j = 0; j < num; j++)
+				sum += pc[i - j];
+		}
+		sumvector.push_back(sum);
+	}
+	reverse(sumvector.begin(), sumvector.end());
+	return sumvector;
+}
+//数组前NUM项元素简单加总计算(返回数组前NUM项的和,返回的仍然是数组形式)(返回逆序数组形式,最新序列号是[0])
+vector<double> test::Average(vector<double> pc, int num)
+{
+	reverse(pc.begin(), pc.end());
+	vector<double> avgvector;
+	if (num <= 0)return avgvector;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		double sum = 0;
+		if ((int)i + 1 < num)
+		{
+			for (size_t j = 0; j <= i; j++)
+				sum += pc[i - j];
+			avgvector.push_back(sum / (i + 1));
+		}
+		else
+		{
+			for (int j = 0; j < num; j++)
+				sum += pc[i - j];
+			avgvector.push_back(sum / num);
+		}
+	}
+	reverse(avgvector.begin(), avgvector.end());
+	return avgvector;
+}
+//Xaverage(ema)计算公式(返回数组)(返回逆序数组形式,最新序列号是[0])
+vector<double> test::Xaverage(vector<double> pc, int num)
+{
+	reverse(pc.begin(), pc.end());//恢复计算变量为正序以方便下面的计算
+	vector<double> r;
+	double d = 0;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i == 0)
+		{
+			d = pc[0];
+			r.push_back(d);
+		}
+		else
+		{
+			d = (2 * pc[i] + (num - 1) * d) / (num + 1);
+			r.push_back(d);
+		}
+	}
+	reverse(r.begin(), r.end());//再次调转逆序与行业规范统一
+	return r;
+}
+//EMA计算公式(返回逆数组)与xaverage同函数不同名，与国内一些软件函数规范统一
+vector<double> test::EMA(vector<double> pc, int num)
+{
+	return Xaverage(pc, num);
+}
+
+//寻找数组中前N个数中的最大值,返回的仍然是数组形式(返回逆序数组形式,最新序列号是[0])
+vector<double> test::Highest(vector<double> pc, int num)
+{
+	reverse(pc.begin(), pc.end());//恢复计算变量为正序以方便下面的计算
+	vector<double> highvector;//声明一个临时存储最高价的变量容器
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if ((int)i + 1 < num)//数据数目不够num周期的,用从pc[0]到pc[i]的全部已有数据求最大值
+		{
+			double r = pc[i]; //初始值用pc[i]本身,而不是0,避免负数场景出错
+			for (size_t j = 0; j <= i; j++) //j从0到i,含pc[0]在内共i+1项,不再漏掉最早一项
+			{
+				r = max2(r, pc[j]);
+			}
+			highvector.push_back(r);//将上面循环中得到最大值代替
+		}
+		else//当i+1的数目大于或等于要求的num个时
+		{
+			double r = pc[i];//初始值用pc[i]本身
+			for (size_t k = 0; k < (size_t)num; k++)
+			{
+				r = max2(r, pc[i - k]); //从pc[i]向左数num个元素分别与r比较,将最大的那个值赋给r
+			}
+			highvector.push_back(r);//将上面的r值增加到数组中。
+		}
+	}
+	reverse(highvector.begin(), highvector.end());//再次调转逆序与行业规范统一
+	return highvector; //返回最高价数组
+}
+//寻找数组中前N个数中的最小值,返回的仍然是数组形式(返回逆序数组形式,最新序列号是[0])
+vector<double> test::Lowest(vector<double> pc, int num)
+{
+	reverse(pc.begin(), pc.end());//恢复计算变量为正序以方便下面的计算
+	vector<double> lowvector;//声明一个临时存储最低价的变量容器
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if ((int)i + 1 < num)//数据数目不够num周期的,用从pc[0]到pc[i]的全部已有数据求最小值
+		{
+			double r = pc[i]; //声明一个存储最小值的临时变量,初始值为pc[i]本身
+			for (size_t j = 0; j <= i; j++) //含pc[0]在内共i+1项
+			{
+				r = min2(r, pc[j]);
+			}
+			lowvector.push_back(r);//将上面循环中得到最小值代替
+		}
+		else//当i+1的数目大于或等于要求的num个时
+		{
+			double r = pc[i]; //声明一个存储最小值的临时变量,初始值为pc[i]本身
+			for (size_t k = 0; k < (size_t)num; k++)
+			{
+				r = min2(r, pc[i - k]); //从pc[i]向左数num个元素分别与r比较,将最小的那个值赋给r
+			}
+			lowvector.push_back(r);//将上面的r值增加到数组中。
+		}
+	}
+	reverse(lowvector.begin(), lowvector.end());//再次调转逆序与行业规范统一
+	return lowvector; //返回最低价数组
+}
+//数组型Truerange的N周期平均计算公式(返回逆序数组形式,最新序列号是[0])
+vector<double> test::AvgTruerange(int num)
+{
+	double dPreClose = 0;
+	vector<double>vAtr, avgatr;
+	RsqBar(sPeriod, sInst);
+	map<string, TKVALUE >::iterator it;
+	for (it = mapK[sPeriod][sInst].begin(); it != mapK[sPeriod][sInst].end(); ++it)
+	{
+		if (dPreClose != 0) //后续bar的计算
+		{
+			double d = it->second.dHigh - it->second.dLow;
+			double dHC = abs(it->second.dHigh - dPreClose);
+			double dLC = abs(it->second.dLow - dPreClose);
+			if (d < dHC)d = dHC;
+			if (d < dLC)d = dLC;
+			vAtr.push_back(d);
+		}
+		dPreClose = it->second.dClose; //第一次运行先将收盘价赋值给dpreclose,方便后同的计算
+	}
+
+	for (size_t i = 0; i < vAtr.size(); i++)
+	{
+		if (i < num) //数量小于周期时用0代替
+		{
+			avgatr.push_back((int)0);
+		}
+		else
+		{
+			double sumatr = 0;
+			for (size_t j = 0; j < num; j++)
+			{
+				sumatr += vAtr[i - j];
+			}
+			avgatr.push_back(sumatr / num);
+		}
+	}
+	reverse(avgatr.begin(), avgatr.end());//调转数组顺序以与行业规范统一
+	return avgatr;
+}
+// 同AvgTruerange
+vector<double> test::ATR(int num)
+{
+	return AvgTruerange(num);
+}
+//数组型Truerange计算公式(返回逆序数组形式,最新序列号是[0])
+vector<double> test::Truerange()
+{
+	double dPreClose = 0;
+	vector<double>vAtr;
+	RsqBar(sPeriod, sInst);
+	map<string, TKVALUE >::iterator it;
+	for (it = mapK[sPeriod][sInst].begin(); it != mapK[sPeriod][sInst].end(); ++it)
+	{
+		if (dPreClose != 0) //后续bar的计算
+		{
+			double d = it->second.dHigh - it->second.dLow;
+			double dHC = abs(it->second.dHigh - dPreClose);
+			double dLC = abs(it->second.dLow - dPreClose);
+			if (d < dHC)d = dHC;
+			if (d < dLC)d = dLC;
+			vAtr.push_back(d);
+		}
+		dPreClose = it->second.dClose; //第一次运行先将收盘价赋值给dpreclose,方便后同的计算
+	}
+	reverse(vAtr.begin(), vAtr.end());//调转数组顺序以与行业规范统一
+	return vAtr;
+}
+vector<double> test::TR()
+{
+	return Truerange();
+}
+//KDJ指标中的D值数组变量(逆序数组)
+vector<double> test::KDJ_dvalue(int num1, int num2, int num3)
+{
+	vector<double>highs, lows, closes, highesthigh, lowestlow; //声明四个变量容器，分别存储当根bar的最高价、最低价及period周期的最高价和最低价
+	int period = num1;//声明整数变量KDJ的周期9
+	vector<double> K, D, J;//声明KDJ的三个容器变量
+	highs = SeriesHigh();//正逆最高价
+	lows = SeriesLow();//正序最低价
+	closes = SeriesClose();//正序收盘价
+	highesthigh = SeriesHighest(highs, period);//period周期最高价
+	lowestlow = SeriesLowest(lows, period);//调用period（9）周期内low的最低价lowest(9)
+	vector<double>c_l, h_l, rsv0, rsv;//声明四个中间变量
+	c_l = SeriesMinus(closes, lowestlow);//close - lowest(9)
+	h_l = SeriesMinus(highesthigh, lowestlow);//highest(9)-lowest(9)
+	rsv0 = SeriesDivide(c_l, h_l);//(close-lowest(9))/(highest(9)-lowest(9))
+	rsv = SeriestimesN(rsv0, 100);//声明未成熟随机值RSV0*100
+	K = SeriesSMA(rsv, num2, 1);//K值
+	D = SeriesSMA(K, num3, 1);//D值
+	reverse(D.begin(), D.end()); // 调转顺序，方便调用，kdj.dvalue[0]是最新值
+	return D;
+}
+
+//KDJ指标中的K值数组变量(逆序数组)
+vector<double> test::KDJ_kvalue(int num1, int num2, int num3)
+{
+	vector<double>highs, lows, closes, highesthigh, lowestlow; //声明四个变量容器，分别存储当根bar的最高价、最低价及period周期的最高价和最低价
+	int period = num1;//声明整数变量KDJ的周期9
+	vector<double> K, D, J;//声明KDJ的三个容器变量
+	highs = SeriesHigh();//调用正序最高价
+	lows = SeriesLow();//调用正序最低价
+	closes = SeriesClose();//调用正序收盘价
+	highesthigh = SeriesHighest(highs, period);//调用period（9）周期内high的最高价highest(9)
+	lowestlow = SeriesLowest(lows, period);//调用period（9）周期内low的最低价lowest(9)
+	vector<double>c_l, h_l, rsv0, rsv;//声明四个中间变量
+	c_l = SeriesMinus(closes, lowestlow);//close - lowest(9)
+	h_l = SeriesMinus(highesthigh, lowestlow);//highest(9)-lowest(9)
+	rsv0 = SeriesDivide(c_l, h_l);//(close-lowest(9))/(highest(9)-lowest(9))
+	rsv = SeriestimesN(rsv0, 100);//声明未成熟随机值RSV0*100
+	K = SeriesSMA(rsv, num2, 1);//K值
+	reverse(K.begin(), K.end());//调转顺序，方便调用，kdj.kvalue[0]是最新值
+	return K;
+}
+//KDJ指标中的J值数组变量(逆序数组)J = 3*K - 2*D
+vector<double> test::KDJ_jvalue(int num1, int num2, int num3)
+{
+	vector<double>highs, lows, closes, highesthigh, lowestlow; //声明四个变量容器，分别存储当根bar的最高价、最低价及period周期的最高价和最低价
+	int period = num1;//声明整数变量KDJ的周期9
+	vector<double> K, D, J;//声明KDJ的三个容器变量
+	highs = SeriesHigh();//调用正序最高价
+	lows = SeriesLow();//调用正序最低价
+	closes = SeriesClose();//调用正序收盘价
+	highesthigh = SeriesHighest(highs, period);//调用period（9）周期内high的最高价highest(9)
+	lowestlow = SeriesLowest(lows, period);//调用period（9）周期内low的最低价lowest(9)
+	vector<double>c_l, h_l, rsv0, rsv;//声明四个中间变量
+	c_l = SeriesMinus(closes, lowestlow);//close - lowest(9)
+	h_l = SeriesMinus(highesthigh, lowestlow);//highest(9)-lowest(9)
+	rsv0 = SeriesDivide(c_l, h_l);//(close-lowest(9))/(highest(9)-lowest(9))
+	rsv = SeriestimesN(rsv0, 100);//声明未成熟随机值RSV0*100
+	K = SeriesSMA(rsv, num2, 1);//K值(此时K为正序数组，尚未reverse)
+	D = SeriesSMA(K, num3, 1);//D值(此时D为正序数组，尚未reverse)
+
+	vector<double>K3, D2;//声明J值计算的中间变量
+	K3 = SeriestimesN(K, 3);//3*K
+	D2 = SeriestimesN(D, 2);//2*D
+	J = SeriesMinus(K3, D2);//J = 3*K - 2*D
+
+	reverse(J.begin(), J.end());//调转顺序，方便调用，kdj.jvalue[0]是最新值
+	return J;
+}
+//返回MACD中的DIFF数组值(逆序数组)
+vector<double> test::MACD_DIFF(vector<double> pc, int num1, int num2, int num3)
+{
+	reverse(pc.begin(), pc.end());//恢复计算变量为正序以方便下面的计算
+	vector<double>ema12, ema26, diff, diffavg;
+	ema12 = SeriesXaverage(pc, num1);//ema12
+	ema26 = SeriesXaverage(pc, num2);//ema26
+	diff = SeriesMinus(ema12, ema26);//ema12 - ema26
+	reverse(diff.begin(), diff.end());//再次调转为逆势方便逻辑比较判断
+	return diff;//返回diff的逆序数组形式，最新数值为diff[0]
+}
+//返回MACD中的DEA数组值(逆序数组)
+vector<double> test::MACD_DEA(vector<double> pc, int num1, int num2, int num3)
+{
+	reverse(pc.begin(), pc.end());//恢复计算变量为正序以方便下面的计算
+	vector<double>ema12, ema26, diff, dea;
+	ema12 = SeriesXaverage(pc, num1);//ema12
+	ema26 = SeriesXaverage(pc, num2);//ema26
+	diff = SeriesMinus(ema12, ema26);//ema12 - ema26
+	dea = SeriesXaverage(diff, num3); //ema(diff,9)
+	reverse(dea.begin(), dea.end());//再次调转为逆势方便逻辑比较判断
+	return dea;
+}
+//返回MACD中的MACD Bar线数值(逆序数组)
+vector<double> test::MACD(vector<double> pc, int num1, int num2, int num3)
+{
+	reverse(pc.begin(), pc.end());//恢复计算变量为正序以方便下面的计算
+	vector<double>ema12, ema26, diff, dea, macd0, macd;
+	ema12 = SeriesXaverage(pc, num1);//ema12
+	ema26 = SeriesXaverage(pc, num2);//ema26
+	diff = SeriesMinus(ema12, ema26);//ema12 - ema26
+	dea = SeriesXaverage(diff, num3); //ema(diff,9)
+	macd0 = SeriesMinus(diff, dea);//macd = diff - dea
+	macd = SeriestimesN(macd0, 2);//macd = macd*2
+	reverse(macd.begin(), macd.end());//再次调转为逆势方便逻辑比较判断
+	return macd;
+}
+//返回SwingHigh数值(逆序数组)将SwingHigh不为零的值存入数组，并调转为逆序，方便引用
+vector<double> test::SwingHigh(vector<double> pc, int leftbars, int rightbars)
+{
+	reverse(pc.begin(), pc.end());//恢复计算变量为正序以方便下面的计算
+	vector<double>newswinghigh;//声明一个变量存储swinghigh
+	newswinghigh.clear();
+
+	for (size_t i = leftbars; i + rightbars < pc.size(); i++)//设计SwingHigh
+	{
+		double CurrentPrice = pc[i];//定义比较基准
+		// 边界检查
+		if (i < leftbars || i + rightbars >= pc.size())
+		{
+			CurrentPrice = -1;//SwingHigh值用-1代替
+		}
+		//检查左侧条件		
+		for (size_t j = 1; j <= leftbars; j++)
+		{
+			if (pc[i - j] >= CurrentPrice) //price[i]小于左侧N个值中的任意个则返回-1.即price[i]必须比左边leftgbars个数值都要大才行
+			{
+				CurrentPrice = -1;
+			}
+		}
+		//检查右侧条件
+		for (int k = 1; k <= rightbars; k++)
+		{
+			if (pc[i + k] >= CurrentPrice) //price[i]小于右侧N个值中的任意个则返回-1.即price[i]必须比右边rightbars个数值都要大才行
+			{
+				CurrentPrice = -1;
+			}
+		}
+		if (CurrentPrice != -1)newswinghigh.push_back(CurrentPrice);
+	}
+	reverse(newswinghigh.begin(), newswinghigh.end());//调转数组为逆序
+	return newswinghigh;//返回swinghigh数组形式非-1值数值,最新值序列标号为[0]
+}
+//返回SwingLowh数值(逆序数组)
+vector<double> test::SwingLow(vector<double> pc, int leftbars, int rightbars)
+{
+	reverse(pc.begin(), pc.end());//恢复计算变量为正序以方便下面的计算
+	vector<double>newswinglow;//声明一个变量存储swinglow
+	newswinglow.clear();
+
+	for (size_t i = leftbars; i + rightbars < pc.size(); i++)//设计SwingLow
+	{
+		double CurrentPrice = pc[i];//定义比较基准
+		// 边界检查
+		if (i < leftbars || i + rightbars >= pc.size())
+		{
+			CurrentPrice = -1;//SwingHigh值用-1代替
+		}
+		//检查左侧条件		
+		for (size_t j = 1; j <= leftbars; j++)
+		{
+			if (pc[i - j] <= CurrentPrice) //price[i]大于左侧N个值中的任意个则返回-1.即price[i]必须比左边leftgbars个数值都要小才行
+			{
+				CurrentPrice = -1;
+			}
+		}
+		//检查右侧条件
+		for (int k = 1; k <= rightbars; k++)
+		{
+			if (pc[i + k] <= CurrentPrice) //price[i]大于右侧N个值中的任意个则返回-1.即price[i]必须比右边rightbars个数值都要大才行
+			{
+				CurrentPrice = -1;
+			}
+		}
+		if (CurrentPrice != -1)newswinglow.push_back(CurrentPrice);
+	}
+	reverse(newswinglow.begin(), newswinglow.end());//调转数组为逆序
+	return newswinglow;//返回swinglow数组形式非-1值数值,最新值序列标号为[0]
+}
+//返回均方根(Root Mean Square,RMS)(逆序数组)
+vector<double> test::RMS(vector<double> pc, int num)
+{
+	reverse(pc.begin(), pc.end());
+	vector<double> newrms;
+	if (num <= 0)return newrms;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if ((int)i + 1 < num)
+		{
+			newrms.push_back(pc[i]);
+		}
+		else
+		{
+			double sum = 0;
+
+			for (int j = 0; j < num; j++)
+				sum += pc[i - j] * pc[i - j];
+			newrms.push_back(sqrt(sum / num));
+		}
+	}
+	reverse(newrms.begin(), newrms.end());
+	return newrms;
+}
+//返回均方根(Root Mean Square,RMS)(逆序数组)
+vector<double> test::SuperSmoother(vector<double> pc, int num)
+{
+	reverse(pc.begin(), pc.end());//恢复计算变量为正序以方便下面的计算
+	double a1, b1, c1, c2, c3;
+	vector<double>newsupers;
+	a1 = exp(-1.414 * 3.15159 / num);
+	b1 = 2 * a1 * cos(1.414 * 180 / num);
+	c2 = b1;
+	c3 = -a1 * a1;
+	c1 = 1 - c2 - c3;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i < 2)
+		{
+			newsupers.push_back((double)0);//当pc数据元素少于num时，newsupers元素用0价格代替
+		}
+		else
+		{
+			double d = c1 * (pc[i] + pc[i - 1]) / 2 + c2 * newsupers[i - 1] + c3 * newsupers[i - 2];//supersmoother计算公式
+			newsupers.push_back(d);
+		}
+	}
+	reverse(newsupers.begin(), newsupers.end());//调转数组为逆序
+	return newsupers;
+}
+//返回Highpass(逆序数组)
+vector<double> test::Highpass(vector<double> pc, int num)
+{
+	reverse(pc.begin(), pc.end());//恢复计算变量为正序以方便下面的计算
+	double a1, b1, c1, c2, c3;
+	vector<double>newhipass;
+	a1 = exp(-1.414 * 3.15159 / num);
+	b1 = 2 * a1 * cos(1.414 * 180 / num);
+	c2 = b1;
+	c3 = -a1 * a1;
+	c1 = (1 + c2 - c3) / 4;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i < 2)
+		{
+			newhipass.push_back((double)0);//当pc数据元素少于num时，newsupers元素用0价格代替
+		}
+		else
+		{
+			double d = c1 * (pc[i] - 2 * pc[i - 1] + pc[i - 2]) + c2 * newhipass[i - 1] + c3 * newhipass[i - 2];//newhipass计算公式
+			newhipass.push_back(d);
+		}
+	}
+	reverse(newhipass.begin(), newhipass.end());//调转数组为逆序
+	return newhipass;
+
+}
+//adx指标(逆序版)
+vector<double> test::Adx(int num1, int num2)
+{
+	vector<double>highv, lowv, closev;
+	highv = SeriesHigh();
+	lowv = SeriesLow();
+	closev = SeriesClose();
+
+	vector<double>closref1, h_l, h_c, l_c;
+	closref1 = SeriesForwardref(closev, 1);
+	h_l = SeriesMinus(highv, lowv);
+	h_c = SeriesMinus(highv, closref1);
+	h_c = SeriesAbs(h_c);
+	l_c = SeriesMinus(lowv, closref1);
+	l_c = SeriesAbs(l_c);
+
+	vector<double>tr0, tr1;
+	for (size_t i = 0; i < h_l.size(); i++)
+	{
+		tr0.push_back(max3(h_l[i], h_c[i], l_c[i]));
+	}
+	tr1 = SeriesSummation(tr0, num1);
+
+	vector<double>HD, LD, highref1, lowref1;
+
+	highref1 = SeriesForwardref(highv, 1);
+	lowref1 = SeriesForwardref(lowv, 1);
+
+	HD = SeriesMinus(highv, highref1);
+	LD = SeriesMinus(lowref1, lowv);
+
+	vector<double>DMP, DMM;
+	for (size_t i = 0; i < HD.size(); i++)
+	{
+		DMP.push_back(iff(HD[i] > 0 && HD[i] > LD[i], HD[i], 0));
+		DMM.push_back(iff(LD[i] > 0 && LD[i] > HD[i], LD[i], 0));
+	}
+
+	vector<double>dmp1, dmm1;
+	dmp1 = SeriesSummation(DMP, num1);
+	dmm1 = SeriesSummation(DMM, num1);
+
+	vector<double>pdi, mdi, pdi100, mdi100;
+	pdi = SeriesDivide(dmp1, tr1);
+	mdi = SeriesDivide(dmm1, tr1);
+	pdi100 = SeriestimesN(pdi, 100);
+	mdi100 = SeriestimesN(mdi, 100);
+
+	vector<double>mdi_pdi, mdi_pdiabs, mdippdi, dx, dx1;
+	mdi_pdi = SeriesMinus(mdi100, pdi100);
+	mdi_pdiabs = SeriesAbs(mdi_pdi);
+	mdippdi = SeriesPlus(mdi100, pdi100);
+	dx = SeriesDivide(mdi_pdiabs, mdippdi);
+	dx1 = SeriestimesN(dx, 100);
+
+	vector<double>adxv;
+	adxv = SeriesAverage(dx1, num2);
+	reverse(adxv.begin(), adxv.end());
+	return adxv;
+}
+//+DI函数计算
+vector<double> test::Adx_pdi(int num)
+{
+	vector<double>highv, lowv, closev;
+	highv = SeriesHigh();
+	lowv = SeriesLow();
+	closev = SeriesClose();
+
+	vector<double>closref1, h_l, h_c, l_c;
+	closref1 = SeriesForwardref(closev, 1);
+	h_l = SeriesMinus(highv, lowv);
+	h_c = SeriesMinus(highv, closref1);
+	h_c = SeriesAbs(h_c);
+	l_c = SeriesMinus(lowv, closref1);
+	l_c = SeriesAbs(l_c);
+
+	vector<double>tr0, tr1;
+	for (size_t i = 0; i < h_l.size(); i++)
+	{
+		tr0.push_back(max3(h_l[i], h_c[i], l_c[i]));
+	}
+	tr1 = SeriesSummation(tr0, num);
+
+	vector<double>HD, LD, highref1, lowref1;
+
+	highref1 = SeriesForwardref(highv, 1);
+	lowref1 = SeriesForwardref(lowv, 1);
+
+	HD = SeriesMinus(highv, highref1);
+	LD = SeriesMinus(lowref1, lowv);
+
+	vector<double>DMP, DMM;
+	for (size_t i = 0; i < HD.size(); i++)
+	{
+		DMP.push_back(iff(HD[i] > 0 && HD[i] > LD[i], HD[i], 0));
+		DMM.push_back(iff(LD[i] > 0 && LD[i] > HD[i], LD[i], 0));
+	}
+
+	vector<double>dmp1, dmm1;
+	dmp1 = SeriesSummation(DMP, num);
+	dmm1 = SeriesSummation(DMM, num);
+
+	vector<double>pdi, mdi, pdi100, mdi100;
+	pdi = SeriesDivide(dmp1, tr1);
+	mdi = SeriesDivide(dmm1, tr1);
+	pdi100 = SeriestimesN(pdi, 100);
+	mdi100 = SeriestimesN(mdi, 100);
+	reverse(pdi100.begin(), pdi100.end());
+	return pdi100;
+}
+//返回-DI数组形式(逆序版)
+vector<double> test::Adx_mdi(int num)
+{
+	vector<double>highv, lowv, closev;
+	highv = SeriesHigh();
+	lowv = SeriesLow();
+	closev = SeriesClose();
+
+	vector<double>closref1, h_l, h_c, l_c;
+	closref1 = SeriesForwardref(closev, 1);
+	h_l = SeriesMinus(highv, lowv);
+	h_c = SeriesMinus(highv, closref1);
+	h_c = SeriesAbs(h_c);
+	l_c = SeriesMinus(lowv, closref1);
+	l_c = SeriesAbs(l_c);
+
+	vector<double>tr0, tr1;
+	for (size_t i = 0; i < h_l.size(); i++)
+	{
+		tr0.push_back(max3(h_l[i], h_c[i], l_c[i]));
+	}
+	tr1 = SeriesSummation(tr0, num);
+
+	vector<double>HD, LD, highref1, lowref1;
+
+	highref1 = SeriesForwardref(highv, 1);
+	lowref1 = SeriesForwardref(lowv, 1);
+
+	HD = SeriesMinus(highv, highref1);
+	LD = SeriesMinus(lowref1, lowv);
+
+	vector<double>DMP, DMM;
+	for (size_t i = 0; i < HD.size(); i++)
+	{
+		DMP.push_back(iff(HD[i] > 0 && HD[i] > LD[i], HD[i], 0));
+		DMM.push_back(iff(LD[i] > 0 && LD[i] > HD[i], LD[i], 0));
+	}
+
+	vector<double>dmp1, dmm1;
+	dmp1 = SeriesSummation(DMP, num);
+	dmm1 = SeriesSummation(DMM, num);
+
+	vector<double>pdi, mdi, pdi100, mdi100;
+	pdi = SeriesDivide(dmp1, tr1);
+	mdi = SeriesDivide(dmm1, tr1);
+	mdi100 = SeriestimesN(mdi, 100);
+	reverse(mdi100.begin(), mdi100.end());
+	return mdi100;
+}
+//抛物线转向指标(SAR)默认参数，af = 0.02,max_af = 0.2
+//---------------------------------------------------------------------------（版本一）-----------------------------------------------------------------+
+vector<double> test::SAR(vector<double> highs, vector<double> lows, double initial_af, double max_af)
+{
+	reverse(highs.begin(), highs.end());//恢复计算变量为正序以方便下面的计算
+	reverse(lows.begin(), lows.end());//恢复计算变量为正序以方便下面的计算
+   // 初始化输出容器
+	vector<double> sar_values(highs.size());
+	if (highs.empty()) return sar_values;
+
+	// 初始参数设置
+	bool is_uptrend = true;       // 初始趋势方向
+	double af = initial_af;          // 当前加速因子
+	double ep = highs.front();    // 极值点(EP)
+	sar_values[0] = lows.front(); // 初始SAR值
+
+	for (size_t i = 1; i < highs.size(); ++i) {
+		// 1. 计算临时SAR值
+		double prev_sar = sar_values[i - 1];
+		double current_sar = prev_sar + af * (ep - prev_sar);
+
+		// 2. 趋势反转检测
+		if ((is_uptrend && lows[i] < current_sar) ||
+			(!is_uptrend && highs[i] > current_sar)) {
+			is_uptrend = !is_uptrend;       // 反转趋势
+			current_sar = ep;               // SAR重置为前极值
+			ep = is_uptrend ? highs[i] : lows[i]; // 更新EP
+			af = initial_af;                   // 重置加速因子
+		}
+		// 3. 更新极值和加速因子(未反转时)
+		else if ((is_uptrend && highs[i] > ep) ||
+			(!is_uptrend && lows[i] < ep)) {
+			ep = is_uptrend ? highs[i] : lows[i];
+			af = min2(af + initial_af, max_af);
+		}
+
+		// 4. 应用极值保护规则
+		if (is_uptrend) {
+			if (i >= 2) current_sar = min2(current_sar, lows[i - 1]);
+			current_sar = min2(current_sar, lows[i]);
+		}
+		else {
+			if (i >= 2) current_sar = max2(current_sar, highs[i - 1]);
+			current_sar = max2(current_sar, highs[i]);
+		}
+
+		sar_values[i] = current_sar;
+	}
+	reverse(sar_values.begin(), sar_values.end());//转为逆序，以与MC规范统一
+	return sar_values;
+}
+//---------------------------------------------------------------------------（版本一）-----------------------------------------------------------------+
+
+//---------------------------------------------------------------------------（版本二）-----------------------------------------------------------------+
+vector<double> test::CalcSAR(int N, double STEP, double MAX)
+{
+	vector<double>highs, lows;
+	highs = SeriesHigh();
+	lows = SeriesLow();
+
+	if (highs.size() != lows.size() || highs.size() < 2) {
+		return {};
+	}
+
+	vector<double>sar(highs.size());
+
+	bool isRising = highs[1] > highs[0];
+	double ep = isRising ? highs[1] : lows[1];
+	sar[0] = isRising ? lows[0] : highs[0];
+	sar[1] = sar[0];
+	double af = STEP;
+
+	for (int i = 2; i < highs.size(); ++i) {
+		sar[i] = sar[i - 1] + af * (ep - sar[i - 1]);
+
+		if (isRising) {
+			if (highs[i] > ep) {
+				ep = highs[i];
+				af = min2(af + STEP, MAX);
+			}
+			if (lows[i] < sar[i]) {
+				isRising = false;
+				sar[i] = ep;
+				ep = lows[i];
+				af = STEP;
+			}
+		}
+		else {
+			if (lows[i] < ep) {
+				ep = lows[i];
+				af = min2(af + STEP, MAX);
+			}
+			if (highs[i] > sar[i]) {
+				isRising = true;
+				sar[i] = ep;
+				ep = highs[i];
+				af = STEP;
+			}
+		}
+	}
+	reverse(sar.begin(), sar.end());//转为逆序，以与MC规范统一
+	return sar;
+}
+//----------------------------------------------------------------------------（版本二）-----------------------------------------------------------------+
+
+//RSI指标计算公式
+vector<double> test::RSI(vector<double> pc, int num)
+{
+	reverse(pc.begin(), pc.end());//恢复计算变量为正序以方便下面的计算
+	//变量声明
+	int period = num;//默认周期14
+	vector<double>rsiv, lc, diffclose, absclose, sma1, sma2;
+	//数据不够时返回
+	if (pc.size() <= period) {
+		Print("数据不足以计算RSI");
+		return rsiv;
+	}
+	lc = SeriesForwardref(pc, 1);//LC := REF(CLOSE,1)
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		diffclose.push_back(max2(pc[i] - lc[i], 0));//MAX(CLOSE-LC,0)
+		absclose.push_back(abs(pc[i] - lc[i]));//ABS(CLOSE-LC)
+	}
+	sma1 = SeriesSMA(diffclose, period, 1);
+	sma2 = SeriesSMA(absclose, period, 1);
+	rsiv.clear();
+	for (size_t i = 0; i < sma1.size(); i++)
+	{
+		if (sma2[i] == 0)
+			rsiv.push_back(0);
+		else
+			rsiv.push_back(sma1[i] / sma2[i] * 100);
+	}
+	reverse(rsiv.begin(), rsiv.end());//转为逆序，以与MC规范统一
+	return rsiv;
+}
+//数组型方差Variance计算公式
+vector<double> test::Variance(vector<double> pc, int num)
+{
+	reverse(pc.begin(), pc.end());//调转数组顺序以形成正序方便下面的计算
+	vector<double>avgma, newvector;
+	avgma = SeriesAverage(pc, num);//中间均线
+
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i < num)
+		{
+			newvector.push_back((int)0);
+		}
+		else
+		{
+			double sumdev = 0;
+			for (size_t j = 0; j < num; j++)
+			{
+				sumdev = sumdev + pow(pc[i - j] - avgma[i], 2);//偏离平方加总
+			}
+			newvector.push_back(sumdev / num);
+		}
+	}
+	reverse(newvector.begin(), newvector.end());//转为逆序，以与MC规范统一
+	return newvector;
+}
+//数组型标准差StandardDev计算公式
+vector<double> test::StandardDev(vector<double> pc, int num)
+{
+	reverse(pc.begin(), pc.end());//调转数组顺序以形成正序方便下面的计算
+	vector<double>avgma, newvector;
+	avgma = SeriesAverage(pc, num);//中间均线
+
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i < num)
+		{
+			newvector.push_back((int)0);
+		}
+		else
+		{
+			double sumdev = 0;
+			for (size_t j = 0; j < num; j++)
+			{
+				sumdev = sumdev + pow(pc[i - j] - avgma[i], 2);//偏离平方加总
+			}
+			newvector.push_back(sqrt(sumdev / num));
+		}
+	}
+	reverse(newvector.begin(), newvector.end());//转为逆序，以与MC规范统一
+	return newvector;
+}
+
+//指数平滑移动平均函数(SMA,sma(x,N,M),即x变量的N周期平均，最新值权重为M，即SMAt = SMAt-1 * (N-M)/N + x*M/N )返回数组形式
+vector<double> test::SMA(vector<double> pc, int num, int num2)
+{
+	reverse(pc.begin(), pc.end());
+	vector<double> smav;
+	if (pc.empty()) return smav;
+	smav.push_back(pc[0]);
+	for (size_t i = 1; i < pc.size(); i++)
+	{
+		double d =
+			(smav[i - 1] * (num - num2) + pc[i] * num2) / (double)num;
+		smav.push_back(d);
+	}
+	reverse(smav.begin(), smav.end());
+	return smav;
+}
+//加权移动平均线（Weighted Moving Average，WMA）的计算方法公式返数组
+vector<double> test::WMA(vector<double> pc, int num)
+{
+	reverse(pc.begin(), pc.end());
+	vector<double> wma;
+	if (num <= 0)return wma;
+	int totalWeight = num * (num + 1) / 2;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if ((int)i + 1 < num)
+		{
+			wma.push_back(0);
+		}
+		else
+		{
+			double sum = 0;
+			for (int j = 0; j < num; j++)
+			{
+				sum += pc[i - j] * (num - j);
+			}
+			wma.push_back(sum / totalWeight);
+		}
+	}
+	reverse(wma.begin(), wma.end());
+	return wma;
+}
+//CR能量指标
+//+-------------------------------------------------------------------------------------------+
+//| MID: = (HIGH + LOW + CLOSE) / 3;                                                          |
+//| CR:SUM(MAX(0, HIGH - REF(MID, 1)), N) / SUM(MAX(0, REF(MID, 1) - LOW), N) * 100;          |
+//+-------------------------------------------------------------------------------------------+
+vector<double> test::CR(int num)
+{
+	//参数设置
+	int period = num;
+
+	//变量初始化
+	vector<double>mid, high_mid, midref, mid_low, max_high_mid, max_mid_low, sum_high_mid, sum_mid_low, cr;
+	vector<double>ihigh, ilow, iclose;
+
+	mid.clear();
+	high_mid.clear();
+	midref.clear();
+	mid_low.clear();
+	max_high_mid.clear();
+	max_mid_low.clear();
+	sum_high_mid.clear();
+	sum_mid_low.clear();
+	cr.clear();
+
+	ihigh.clear();
+	ilow.clear();
+	iclose.clear();
+
+	ihigh = SeriesHigh();
+	ilow = SeriesLow();
+	iclose = SeriesClose();
+
+	mid = (ihigh + ilow + iclose) / 3;  //MID
+	midref = SeriesForwardref(mid, 1);//REF(MID,1)
+	high_mid = ihigh - midref;        //HIGH-REF(MID,1)
+	mid_low = midref - ilow;          //REF(MID,1)-LOW
+
+	for (size_t i = 0; i < mid.size(); i++)
+	{
+		max_high_mid.push_back(max2(0, high_mid[i]));//MAX(0,HIGH-REF(MID,1))
+		max_mid_low.push_back(max2(0, mid_low[i]));  //MAX(0,REF(MID,1)-LOW)
+	}
+	sum_high_mid = SeriesSummation(max_high_mid, period);//SUM(MAX(0,HIGH-REF(MID,1)),N)
+	sum_mid_low = SeriesSummation(max_mid_low, period);  //SUM(MAX(0,REF(MID,1)-LOW),N)
+	cr = sum_high_mid / sum_mid_low;
+	cr = cr * 100;
+
+	reverse(cr.begin(), cr.end());//调转数组顺序以与行业规范统一
+
+	return cr;
+}
+//+-----------------------------------------------------------------+
+//|返回整个序列的 LinearRegValue 数组                               |
+//|price: 输入序列(close等)                                         |
+//|length: 回归周期                                                 |
+//|返回: 与 price 等长的序列, 前 length-1 个点设为 NAN              |                                                    
+//+-----------------------------------------------------------------+
+	//LinearRegression线性回归【逆序数组格式】
+vector<double> test::LinearRegression(vector<double> pc, int num)
+{
+	reverse(pc.begin(), pc.end());   //将数组顺序转为正常顺序
+	int size = pc.size();            //获得数组大小
+	vector<double>result(size, NAN); //初始化为 NAN
+
+	if (num <= 1 || size < num)
+	{
+		return result; //数据不够，返回 NAN
+	}
+
+	for (int end = num - 1; end < size; ++end)
+	{
+		int start = end - num + 1;
+
+		// 回归计算
+		double sumX = 0.0, sumY = 0.0, sumXY = 0.0, sumX2 = 0.0;
+		for (int i = 0; i < num; i++) {
+			double x = i;
+			double y = pc[start + i];
+			sumX += x;
+			sumY += y;
+			sumXY += x * y;
+			sumX2 += x * x;
+		}
+
+		double denominator = num * sumX2 - sumX * sumX;
+		if (denominator == 0.0) {
+			result[end] = NAN;
+			continue;
+		}
+
+		double slope = (num * sumXY - sumX * sumY) / denominator;
+		double intercept = (sumY - slope * sumX) / num;
+
+		// 回归线在最后一个点 (对应 end) 的值
+		double xVal = num - 1;
+		result[end] = intercept + slope * xVal;
+	}
+	reverse(result.begin(), result.end());//调转数组顺序以与行业规范统一
+	return result;
+}
+//LinearRegression线性回归角度【逆序数组格式】
+vector<double> test::LinearRegression_slope(vector<double> pc, int num)
+{
+	reverse(pc.begin(), pc.end());   //将数组顺序转为正常顺序
+	int size = pc.size();            //获得数组大小
+	vector<double>result(size, NAN); //初始化为 NAN
+
+	if (num <= 1 || size < num)
+	{
+		return result; //数据不够，返回 NAN
+	}
+
+	for (int end = num - 1; end < size; ++end)
+	{
+		int start = end - num + 1;
+
+		// 回归计算
+		double sumX = 0.0, sumY = 0.0, sumXY = 0.0, sumX2 = 0.0;
+		for (int i = 0; i < num; i++) {
+			double x = i;
+			double y = pc[start + i];
+			sumX += x;
+			sumY += y;
+			sumXY += x * y;
+			sumX2 += x * x;
+		}
+
+		double denominator = num * sumX2 - sumX * sumX;
+		if (denominator == 0.0) {
+			result[end] = NAN;
+			continue;
+		}
+
+		double slope = (num * sumXY - sumX * sumY) / denominator;
+		double intercept = (sumY - slope * sumX) / num;
+
+		// 回归线角度最后一个点 (对应 end) 的值
+		result[end] = slope;
+	}
+	reverse(result.begin(), result.end());//调转数组顺序以与行业规范统一
+	return result;
+}
+//LinearRegression线性回归截距【逆序数组格式】
+vector<double> test::LinearRegression_intercept(vector<double> pc, int num)
+{
+	reverse(pc.begin(), pc.end());   //将数组顺序转为正常顺序
+	int size = pc.size();            //获得数组大小
+	vector<double>result(size, NAN); //初始化为 NAN
+
+	if (num <= 1 || size < num)
+	{
+		return result; //数据不够，返回 NAN
+	}
+
+	for (int end = num - 1; end < size; ++end)
+	{
+		int start = end - num + 1;
+
+		// 回归计算
+		double sumX = 0.0, sumY = 0.0, sumXY = 0.0, sumX2 = 0.0;
+		for (int i = 0; i < num; i++) {
+			double x = i;
+			double y = pc[start + i];
+			sumX += x;
+			sumY += y;
+			sumXY += x * y;
+			sumX2 += x * x;
+		}
+
+		double denominator = num * sumX2 - sumX * sumX;
+		if (denominator == 0.0) {
+			result[end] = NAN;
+			continue;
+		}
+
+		double slope = (num * sumXY - sumX * sumY) / denominator;
+		double intercept = (sumY - slope * sumX) / num;
+
+		// 回归线截距最后一个点 (对应 end) 的值
+		result[end] = intercept;
+	}
+	reverse(result.begin(), result.end());//调转数组顺序以与行业规范统一
+	return result;
+}
+//严格遵守文华财经规则的SAR公式
+/**
+* 文华财经风格 SAR(N, STEP, MAX)
+* @param high  最高价数组（正序：索引0=最早K线）
+* @param low   最低价数组（正序：索引0=最早K线）
+* @param N     初始周期，文华默认=4
+* @param STEP  加速因子初始值，文华默认=0.02
+* @param MAX   加速因子最大值，文华默认=0.20
+*/
+vector<double> test::Parabolic(int N, double STEP, double MAX)
+{
+	// === 内部结构体定义：封装计算结果 ===
+	struct Result
+	{
+		vector<double> sar;   // 每根K线的SAR值
+		vector<int> trend;    // 每根K线的趋势方向：1=多头，-1=空头，0=未定义
+	};
+
+	int n = 4;
+	double step = 0.02;
+	double max = 0.20;
+
+	vector<double>highs, lows;
+	highs = SeriesHigh();//最高价数据采集
+	lows = SeriesLow();  //最低价数据采集
+
+	int size1 = highs.size();
+	vector<double>sar(size1, 0.0);//保存SAR值数组变量
+
+	if (size1 < n + 2)
+	{
+		Print("数据长度不足，至少需要 N+2 根K线");
+		return sar;
+	}
+	// === 1. 确定初始趋势 ===
+	double upCount = 0, downCount = 0;
+	for (int i = 1; i <= n; ++i) {
+		if (highs[i] > highs[i - 1]) upCount++;
+		if (lows[i] < lows[i - 1]) downCount++;
+	}
+	int trend = (upCount >= downCount) ? 1 : -1; // 1=多头, -1=空头
+
+	// === 2. 初始化SAR、EP、AF ===
+	double SAR = 0.0; // 当前SAR值
+	double EP = 0.0;  // 极值点（Extreme Point）
+	double AF = step; // 加速因子
+
+	if (trend == 1) { // 初始多头
+		SAR = *min_element(lows.begin(), lows.begin() + n);  // 最近N根最低价
+		EP = *max_element(highs.begin(), highs.begin() + n); // 最近N根最高价
+	}
+	else {           // 初始空头
+		SAR = *max_element(highs.begin(), highs.begin() + n); // 最近N根最高价
+		EP = *min_element(lows.begin(), lows.begin() + n);    // 最近N根最低价
+	}
+
+	sar[n - 1] = SAR;
+
+	// === 3. 从第N根开始递推计算 ===
+	for (int i = n; i < size1; ++i)
+	{
+		// 3.1 计算SAR
+		SAR = SAR + AF * (EP - SAR);
+
+		// 3.2 修正SAR越界
+		if (trend == 1) { // 多头
+			SAR = min2(SAR, lows[i - 1]);
+			SAR = min2(SAR, lows[i - 2]);
+		}
+		else {          // 空头
+			SAR = max2(SAR, highs[i - 1]);
+			SAR = max2(SAR, highs[i - 2]);
+		}
+
+		// 3.3 判断趋势翻转
+		bool reverse = false;
+		if (trend == 1 && lows[i] < SAR) {
+			// 多头 → 空头
+			trend = -1;
+			reverse = true;
+			SAR = EP;      // 翻转时SAR重置为之前的EP
+			EP = lows[i];   // 新趋势EP = 当前最低价
+			AF = step;     // AF重置
+		}
+		else if (trend == -1 && highs[i] > SAR) {
+			// 空头 → 多头
+			trend = 1;
+			reverse = true;
+			SAR = EP;
+			EP = highs[i];
+			AF = step;
+		}
+
+		// 3.4 如果未翻转，更新EP和AF
+		if (!reverse) {
+			if (trend == 1) {
+				if (highs[i] > EP) {
+					EP = highs[i];
+					AF = min2(AF + step, max);
+				}
+			}
+			else {
+				if (lows[i] < EP) {
+					EP = lows[i];
+					AF = min2(AF + step, max);
+				}
+			}
+		}
+
+		// 保存计算结果
+		sar[i] = SAR;
+	}
+	reverse(sar.begin(), sar.end());//调转数组顺序以与行业规范统一
+	return sar;
+}
+// OBV指标：能量潮,内部用正序数组计算(SeriesClose/SeriesVolume)，最终返回逆序数组([0]为最新)
+vector<double>test::OBV()
+{
+	vector<double> closePrice = SeriesClose();    // 正序，[0]最老
+	vector<double> vol = SeriesVolume();          // 正序，[0]最老
+	// 数据检查
+	if (closePrice.size() != vol.size()) { Print("  收盘价与成交量数据没有对齐！"); return vector<double>(); }
+
+	vector<double> obvSeries(closePrice.size(), 0.0); // 正序中间结果
+
+	for (size_t i = 1; i < closePrice.size(); i++)
+	{
+		double diff = closePrice[i] - closePrice[(double)i - 1];
+
+		if (diff > 0)
+			obvSeries[i] = obvSeries[i - 1] + vol[i];
+		else if (diff < 0)
+			obvSeries[i] = obvSeries[i - 1] - vol[i];
+		else
+			obvSeries[i] = obvSeries[i - 1];
+	}
+	// 转换为逆序输出，[0]为最新值，与你其他接口保持一致
+	vector<double>obv(obvSeries.rbegin(), obvSeries.rend());
+	return obv;
+}
+// 三重指数平滑振荡器（TRIX: Triple Exponential Smoothing Oscillator)
+//====================================================== 
+// 三重指数平滑振荡器 
+// TRIX: Triple Exponential Smoothing Oscillator // 
+// TRIX = (EMA3 - REF(EMA3,1)) / REF(EMA3,1) * 100 // 
+// 输入： 
+// pc = 价格序列，鼎元默认 [0] 为最新 
+// num = EMA周期
+// 输出： 
+// 返回TRIX序列，保持鼎元顺序：[0]为最新 
+//======================================================
+vector<double> test::TRIX(vector<double>pc, int num)
+{
+	vector<double> result;
+	// 数据检查
+	if (pc.size() < MaxBarsBack) { Print("  数据数量少于最少保留数量！"); return  result; }
+	if (num <= 1) { Print("  周期参数非法！"); return  result; }
+	// 将鼎元的时间倒序转换为正常时间顺序,转换后：[0]最早，[a-1]最新
+	reverse(pc.begin(), pc.end());
+	int a = pc.size();               // 获得pc数组的长度
+	vector<double>ema1, ema2, ema3;
+	ema1 = SeriesXaverage(pc, num);
+	ema2 = SeriesXaverage(ema1, num);
+	ema3 = SeriesXaverage(ema2, num);
+	vector<double>trix(a, 0);
+	for (size_t i = 1; i < a; i++)
+	{
+		if (ema3[i - 1] != 0)
+		{
+			trix[i] = (ema3[i] - ema3[i - 1]) / ema3[i - 1] * 100.0;
+		}
+		else
+		{
+			trix[i] = 0;
+		}
+
+	}
+	// 第一根没有前值 
+	trix[0] = 0;
+	//================================================== 
+	// 恢复鼎元顺序 
+	// [0] = 最新 
+	//================================================== 
+	reverse(trix.begin(), trix.end());
+	return trix;
+}
+// 三重指数平滑振荡器信号线
+vector<double> test::TRIX_signal(vector<double>pc, int num, int num2)
+{
+	vector<double> result;
+	// 数据检查
+	if (pc.size() < MaxBarsBack) { Print("  数据数量少于最少保留数量！"); return result; }
+	if (num <= 1) { Print("  周期参数1非法！"); return result; }
+	if (num2 <= 1) { Print("  周期参数2非法！"); return result; }
+	vector<double> trix = TRIX(pc, num);
+	vector<double> signal = Xaverage(trix, num2);
+	return signal;
+}
+//+-----------------------------------------------------------------------------------------------------------------+
+//| CCI 商品通道指数                                                                                                |
+//|‌ 由唐纳德·兰伯特于1980年提出，主要用来判断价格是否超出常态波动范围，‌±100是关键分界线‌。PC数组逆序，输出也是逆序 |                                                                                            |
+//+-----------------------------------------------------------------------------------------------------------------+
+vector<double> test::CCI(vector<double> pc, int num)
+{
+	vector<double> result;
+
+	if (num <= 0)
+		return result;
+
+	int size = pc.size();
+
+	if (size < num)
+		return result;
+
+	result.resize(size, 0);
+	for (size_t i = 0; i <= size - num; i++)
+	{
+		//==================================================
+		// 1. 计算N周期平均典型价
+		//==================================================
+		double average = 0;
+
+		for (size_t j = 0; j < num; j++)
+		{
+			average += pc[i + j];
+		}
+
+		average /= num;
+
+
+		//==================================================
+		// 2. 计算N周期平均偏差 MD
+		//==================================================
+		double meanDeviation = 0;
+
+		for (size_t j = 0; j < num; j++)
+		{
+			meanDeviation += fabs(pc[i + j] - average);
+		}
+
+		meanDeviation /= num;
+
+
+		//==================================================
+		// 3. CCI
+		//==================================================
+		if (meanDeviation != 0)
+		{
+			result[i] =
+				(pc[i] - average) /
+				(0.015 * meanDeviation);
+		}
+		else
+		{
+			result[i] = 0;
+		}
+	}
+	return result;
+}
+//+-----------------------------------------------------------------------------------------------------------------+
+//| EXPMA 指数平均数                                                                                                |
+//| close[0] = 最新数据，逆序                                                                                       |
+//| num      = EXPMA 周期                                                                                           |
+//+-----------------------------------------------------------------------------------------------------------------+
+vector<double> test::EXPMA(vector<double> pc, int num)
+{
+	vector<double> result;
+
+	if (num <= 0)
+		return result;
+
+	int size = pc.size();
+
+	if (size < num)
+		return result;
+
+	// 鼎元数据为逆序，转换成正序
+	reverse(pc.begin(), pc.end());
+
+	result.resize(size, 0);
+
+	// 初始 EXPMA 使用前 num 个收盘价的平均值
+	double sum = 0;
+
+	for (int i = 0; i < num; i++)
+		sum += pc[i];
+
+	result[num - 1] = sum / num;
+
+	// EXPMA计算
+	for (int i = num; i < size; i++)
+	{
+		result[i] =
+			(close[i] * 2.0 + result[i - 1] * (num - 1.0)) / (num + 1.0);
+	}
+	// 转回鼎元逆序
+	reverse(result.begin(), result.end());
+
+	return result;
+}
+//第五类函数(常用到的基本计算函数,逆序版，适合直接做逻辑判断用)
+
+//第六类函数(跨期函数,逆序版，适合直接做逻辑判断用)
+//返回数组形式的period期(day,min60,min30,min15,min15,min10,min5)的pricetype(close,high,low,open)相关价格数据,注意跨的周期一定要比运行周期大(返回逆序数组形式,最新序列号是[0])
+vector<double> test::CrossOverPeriod(string PriceType, string periodType)
+{
+	vector<double>newprice;
+	RsqBar(periodType, sInst);
+	if (mapK.find(periodType) == mapK.end())
+	{
+		Print("Period Not Exist");
+		return newprice;
+	}
+	if (mapK[periodType].find(sInst) == mapK[periodType].end())
+	{
+		Print("Instrument Not Exist");
+		return newprice;
+	}
+	map<string, TKVALUE>::reverse_iterator it;//逆迭代
+	for (it = mapK[periodType][sInst].rbegin(); it != mapK[periodType][sInst].rend(); it++)
+	{
+		if (PriceType == "close")newprice.push_back(it->second.dClose);
+		else if (PriceType == "open")newprice.push_back(it->second.dOpen);
+		else if (PriceType == "high")newprice.push_back(it->second.dHigh);
+		else if (PriceType == "low") newprice.push_back(it->second.dLow);
+		else
+		{
+			Print("CrossOverPeriod : PriceType Error -> " + PriceType);
+			return vector<double>();
+		}
+	}
+	reverse(newprice.begin(), newprice.end());//调转数组顺序以与行业规范统一
+	return newprice;
+}
+
+//跨周期跨品种调用数据(返回数组形式)(返回逆序数组形式,最新序列号是[0])
+vector<double> test::CrossOverPeriodInst(string PriceType, string periodType, string inst)
+{
+	vector<double>newprice;
+	RsqBar(periodType, inst);
+	// 检查周期合法性
+	if (mapK.find(periodType) == mapK.end())
+	{
+		Print("CrossOverPeriodInst : Period Not Exist -> " + periodType);
+		return newprice;
+	}
+	// 检查合约合法性
+	if (mapK[periodType].find(inst) == mapK[periodType].end())
+	{
+		Print("CrossOverPeriodInst : Instrument Not Exist -> " + inst);
+		return newprice;
+	}
+	// 迭代与取值
+	map<string, TKVALUE>::reverse_iterator it;//逆迭代
+	for (it = mapK[periodType][sInst].rbegin(); it != mapK[periodType][sInst].rend(); it++)
+	{
+		if (PriceType == "close")newprice.push_back(it->second.dClose);
+		else if (PriceType == "open")newprice.push_back(it->second.dOpen);
+		else if (PriceType == "high")newprice.push_back(it->second.dHigh);
+		else if (PriceType == "low") newprice.push_back(it->second.dLow);
+		else
+		{
+			Print("CrossOverPeriod : PriceType Error -> " + PriceType);
+			return vector<double>();
+		}
+	}
+	// 反转序列
+	reverse(newprice.begin(), newprice.end());//调转数组顺序以与行业规范统一
+	// 返回数组
+	return newprice;
+}
+//第六类函数(跨期函数,逆序版，适合直接做逻辑判断用)
+
+//第七部分 数组基本运算函数(开始)加,减,乘,除,移位【参数数组为正序,返回数组也为正序】
+//数组前NUM项元素加总计算【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesSummation(vector<double> pc, int num)
+{
+	vector<double> sumvector;
+	if (num <= 0)
+	{
+		Print("Error : num <= 0.");
+		return sumvector;
+	}
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		double sum = 0;
+		if ((int)i + 1 < num)
+		{
+			for (size_t j = 0; j <= i; j++)
+			{
+				sum += pc[i - j];
+			}
+		}
+		else
+		{
+			for (int j = 0; j < num; j++)
+			{
+				sum += pc[i - j];
+			}
+		}
+		sumvector.push_back(sum);
+	}
+	return sumvector;
+}
+//数组所有项元素都乘N(N非0)【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriestimesN(vector<double> pc, double num)
+{
+	vector<double>PcTimesN;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		PcTimesN.push_back(pc[i] * num);
+	}
+	return PcTimesN;
+}
+//数组所有项元素都除N(N非0)【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesDivideN(vector<double> pc, double num)
+{
+	vector<double> PcDivideN;
+	if (num == 0)
+	{
+		for (size_t i = 0; i < pc.size(); i++)PcDivideN.push_back(0);
+		return PcDivideN;
+	}
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		PcDivideN.push_back(pc[i] / num);
+	}
+	return PcDivideN;
+}
+//两个数组的相加函数【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesPlus(vector<double> pc, vector<double> pc2)
+{
+	vector<double> sumvector;
+	sumvector.reserve(pc.size());
+	if (pc.size() != pc2.size())
+		return sumvector;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		sumvector.push_back(pc[i] + pc2[i]);
+	}
+	return sumvector;
+}
+//两个数组相减函数【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesMinus(vector<double> pc, vector<double> pc2)
+{
+	vector<double> minusvector;
+	minusvector.reserve(pc.size());
+	if (pc.size() != pc2.size())
+		return minusvector;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		minusvector.push_back(pc[i] - pc2[i]);
+	}
+	return minusvector;
+}
+//两个数组内元素相乘【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesTimes(vector<double> pc, vector<double> pc2)
+{
+	vector<double> Timesvector;// 声明一个新的数组变量存储积的值
+	Timesvector.reserve(pc.size());
+	if (pc.size() != pc2.size())return Timesvector;//两个数组中的元素数量必须得相等,否则无法相乘
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		Timesvector.push_back(pc[i] * pc2[i]);
+	}
+	return Timesvector;
+}
+//两个数组内元素相除【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesDivide(vector<double> pc, vector<double> pc2)
+{
+	vector<double> Dividevector;// 声明一个新的数组变量存储积的值
+	Dividevector.reserve(pc.size());
+	if (pc.size() != pc2.size())return Dividevector;//两个数组中的元素数量必须得相等,否则无法相除
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (pc2[i] == 0)//如果被除数为0时处理方法
+		{
+			if (i == 0)//又是第一项
+			{
+				Dividevector.push_back(0);//用0代替
+			}
+			else //其它项
+			{
+				Dividevector.push_back(Dividevector[i - 1]);//用上一个值代替
+			}
+		}
+		else
+		{
+			Dividevector.push_back(pc[i] / pc2[i]);//正常处理
+		}
+	}
+	return Dividevector;
+}
+//数组与自己第前NUM项相减(应用场景:momentom计算类及涉及价格处于涨势或跌势)【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesSelfMinus(vector<double> pc, int num)
+{
+	vector<double>self;
+	if (num <= 0)
+	{
+		Print("Error : num <= 0.");
+		return self;
+	}
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i < num)//数据不够时
+		{
+			self.push_back((int)0);// 用0代替
+		}
+		else//数据量足够时
+		{
+			self.push_back(pc[i] - pc[i - num]);
+		}
+	}
+	return self;
+}
+//数组与自己第前NUM项相除(应用场景:momentom计算类及涉及价格处于涨势或跌势)与相减相比此处为比率形式【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesSelfDivide(vector<double> pc, int num)
+{
+	vector<double> result;
+	if (num <= 0)
+	{
+		Print("Error : num <= 0.");
+		return result;
+	}
+	result.reserve(pc.size());
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i < (size_t)num)
+		{
+			result.push_back(0);
+		}
+		else
+		{
+			if (pc[i - num] == 0)
+			{
+				if (i == (size_t)num)
+					result.push_back(0);
+				else
+					result.push_back(result.back());
+			}
+			else
+			{
+				result.push_back(pc[i] / pc[i - num]);
+			}
+		}
+	}
+	return result;
+}
+//Vctor数组元素往右挪N位【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesForwardref(vector<double> pc, int ref)
+{
+	vector<double>newself;
+	for (size_t i = 0; i < pc.size(); i++) //因为前ref项已经单独设置为0,为了保证后面使用过程中数组元素数量相同,最新的ref项我们删除不使用
+	{
+
+		if (i < ref)//当循环项为小于右移的项数时
+		{
+			newself.push_back((int)0);//前ref项都设置为0
+		}
+		else
+		{
+			newself.push_back(pc[i - ref]);//将pc第i项数据pc[i]存入newself[i+1]项中
+		}
+	}
+
+	return newself;// 返回新的数组,因为前面加了ref项,后面减了ref项,所以新的数组与原来的数组数量是一致的
+}
+//Vctor数组元素取绝对值【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesAbs(vector<double> pc)
+{
+	vector<double>absvevctor;
+	absvevctor.reserve(pc.size());
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		absvevctor.push_back(fabs(pc[i]));
+	}
+	return absvevctor;
+}
+//Vector幂次方数组计算【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesPowerN(vector<double> pc, int num)
+{
+	vector<double>newvector;//声明新变量容器
+	newvector.reserve(pc.size());
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		newvector.push_back(pow(pc[i], num));//pow(x,y)
+	}
+	return newvector;
+}
+//平方根计算【参数数组为正序,返回数组也为正序】
+vector<double> test::Seriessquareroot(vector<double> pc)
+{
+	vector<double> result;
+	result.reserve(pc.size());
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (pc[i] < 0)
+			result.push_back(0);
+		else
+			result.push_back(sqrt(pc[i]));
+	}
+	return result;
+}
+//数组元素取倒数计算【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesReciprocal(vector<double> pc)
+{
+	vector<double> result;
+	result.reserve(pc.size());
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (pc[i] == 0)
+		{
+			if (i == 0)
+				result.push_back(0);
+			else
+				result.push_back(result.back());
+		}
+		else
+		{
+			result.push_back(1.0 / pc[i]);
+		}
+	}
+	return result;
+}
+//数值除数组元素各元素计算【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesNDivide(int num, vector<double> pc)
+{
+	vector<double> result;
+	result.reserve(pc.size());
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (pc[i] == 0)
+		{
+			if (i == 0)
+				result.push_back(0);
+			else
+				result.push_back(result.back());
+		}
+		else
+		{
+			result.push_back((double)num / pc[i]);
+		}
+	}
+	return result;
+}
+//数组元素取负计算【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesNegation(vector<double> pc)
+{
+	vector<double>newvector2;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		newvector2.push_back(-(pc[i]));
+	}
+	return newvector2;
+}
+//数组元素分别被N减计算【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesNMinus(int num, vector<double> pc)
+{
+	vector<double>newvector;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		newvector.push_back(num - pc[i]);
+	}
+	return newvector;
+}
+//数组每一项 + N计算(返回所有项 + N后的数组, 如果N为负值,则为相减)【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesPlusN(vector<double> pc, double num)
+{
+	vector<double>plusN;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		plusN.push_back(pc[i] + num);
+	}
+	return plusN;
+}
+// SeriesMax(A,B)：返回 max(A[i], B[i])
+vector<double> test::SeriesMax(vector<double> a, vector<double> b)
+{
+	vector<double> out;
+	size_t n = min(a.size(), b.size());
+
+	for (size_t i = 0; i < n; i++)
+	{
+		out.push_back(a[i] > b[i] ? a[i] : b[i]);
+	}
+	return out;
+}
+// SeriesMin(A,B)：返回 min(A[i], B[i])
+vector<double> test::SeriesMin(vector<double> a, vector<double> b)
+{
+	vector<double> out;
+	size_t n = min(a.size(), b.size());
+
+	for (size_t i = 0; i < n; i++)
+	{
+		out.push_back(a[i] < b[i] ? a[i] : b[i]);
+	}
+	return out;
+}
+// SeriesDiff（差分）
+vector<double> test::SeriesDiff(vector<double> a)
+{
+	vector<double> out;
+	if (a.empty()) return out;
+
+	out.push_back(0);
+
+	for (size_t i = 1; i < a.size(); i++)
+	{
+		out.push_back(a[i] - a[i - 1]);
+	}
+	return out;
+}
+// 累计和，A[0..i]求和
+vector<double> test::SeriesCumSum(vector<double> a)
+{
+	vector<double> out;
+	double sum = 0;
+
+	for (size_t i = 0; i < a.size(); i++)
+	{
+		sum += a[i];
+		out.push_back(sum);
+	}
+	return out;
+}
+// 数组顺序翻转
+vector<double> test::SeriesReverse(vector<double> a)
+{
+	vector<double> out;
+	for (int i = (int)a.size() - 1; i >= 0; i--)
+	{
+		out.push_back(a[i]);
+	}
+	return out;
+}
+// SeriesMaxIndex(A, N)：每个位置 i，返回最近 N 根中最大值位置（或距离）
+vector<double> test::SeriesMaxIndex(vector<double> a, int n)
+{
+	vector<double> out;
+	if (a.empty() || n <= 0) return out;
+
+	for (size_t i = 0; i < a.size(); i++)
+	{
+		int start = (i < (size_t)n - 1) ? 0 : i - n + 1;
+
+		double maxv = a[start];
+		int idx = start;
+
+		for (size_t j = start; j <= i; j++)
+		{
+			if (a[j] > maxv)
+			{
+				maxv = a[j];
+				idx = j;
+			}
+		}
+
+		out.push_back((double)(i - idx)); // 距离当前K线的bar数
+	}
+
+	return out;
+}
+// SeriesMinIndex(A, N)：每个位置 i，返回最近 N 根中最小值位置（或距离）
+vector<double> test::SeriesMinIndex(vector<double> a, int n)
+{
+	vector<double> out;
+	if (a.empty() || n <= 0) return out;
+
+	for (size_t i = 0; i < a.size(); i++)
+	{
+		int start = (i < (size_t)n - 1) ? 0 : i - n + 1;
+
+		double minv = a[start];
+		int idx = start;
+
+		for (size_t j = start; j <= i; j++)
+		{
+			if (a[j] < minv)
+			{
+				minv = a[j];
+				idx = j;
+			}
+		}
+
+		out.push_back((double)(i - idx));
+	}
+
+	return out;
+}
+//第七部分 数组基本运算函数(开始)加,减,乘,除,移位【参数数组为正序,返回数组也为正序】
+
+//第八部分 数组中级运算函数(极值,均值,方差)【参数数组为正序,返回数组也为正序】
+//数组前NUM项元素简单加总计算(返回数组前NUM项的和,返回的仍然是数组形式)【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesAverage(vector<double> pc, int num)
+{
+
+	vector<double> avgvector;//声明一个存储和的容器变量
+	avgvector.clear();
+	double sum = 0;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i == 0)
+		{
+			avgvector.push_back(pc[i]);;
+		}
+		else if (i < num) //如果数据数目小于周期要求的最低bar数量
+		{
+			sum = 0;
+			for (size_t j = 0; j <= i; j++)
+			{
+				sum = sum + pc[i - j];//前num个数值相加
+			}
+			avgvector.push_back(sum / (i + 1)); //用简单平均代替并存入容器中
+		}
+		else //pc数目大于num周期后正常计算方法
+		{
+			sum = 0;//重置加总变量
+			for (size_t j = 0; j < num; j++)
+			{
+				sum = sum + pc[i - j];//加总从pc[i]往左数num个pc的数值
+			}
+			avgvector.push_back(sum / num);
+		}
+	}
+
+	return avgvector;
+}
+//Xaverage(ema)计算公式(返回数组)【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesXaverage(vector<double> pc, int num)
+{
+
+	vector<double> r;
+	double d = 0;
+	for (int i = 0; i < pc.size(); i++)
+	{
+		if (i == 0)
+		{
+			d = pc[0];
+			r.push_back(d);
+		}
+		else
+		{
+			d = (2 * pc[i] + ((double)num - 1) * d) / ((double)num + 1);
+			r.push_back(d);
+		}
+	}
+
+	return r;
+}
+//平滑平均(返回数组)【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesSmoothedAverage(vector<double> pc, int num)
+{
+	vector<double> smoothaverage;//声明一个存储SMA的容器变量
+	double smavalue = 0;//声明中间临时存储SMA值的变量
+	double sum = 0;
+	double a = (double)num + 1;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i == 0)
+		{
+			smavalue = pc[i];
+			smoothaverage.push_back(pc[i]);
+		}
+		else if (i < num) //如果数据数目小于周期要求的最低bar数量
+		{
+			sum = 0;
+			for (size_t j = 0; j < i; j++)
+			{
+				sum = sum + pc[i - j];
+			}
+			smavalue = sum / i;
+			smoothaverage.push_back(smavalue); //用简单平均代替并存入容器中
+		}
+		else //pc数目大于num周期后正常计算方法
+		{
+			sum = 0;//重置加总变量
+			for (size_t j = 0; j <= num; j++)
+			{
+				sum = sum + pc[i - j];//加总从pc[i]往左数num个pc的数值
+			}
+			smavalue = (sum - smavalue) / num;
+			//SmoothedAverage = (Summation(PriceValue, Len + 1) - SmoothedAverage[1]) / Len;
+			smoothaverage.push_back(smavalue);
+		}
+	}
+	return smoothaverage;
+}
+
+//指数平滑移动平均函数(SMA,sma(x,N,M),即x变量的N周期平均，最新值权重为M，即SMAt = SMAt-1 * (N-M)/N + x*M/N )返回数组形式【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesSMA(vector<double> pc, int num, int num2)
+{
+	//reverse(pc.begin(), pc.end());
+	vector<double>smav; //声明一个设计变量容器
+	for (int i = 0; i < pc.size(); i++)
+	{
+		if (i < num)
+		{
+			smav.push_back(pc[i]);
+		}
+		else
+		{
+			smav.push_back(smav[(double)i - 1] * ((double)num - num2) / num + pc[i] / num);
+		}
+	}
+	return smav;
+}
+//加权移动平均线（Weighted Moving Average）计算公式,返回数组
+//对标MultiCharts/TradeStation EasyLanguage标准函数 WAverage(Price, Length)
+//权重为最新值num,次新值num-1,...,最早值1,分母为权重总和 N*(N+1)/2
+//【参数数组为正序,返回数组也为正序,最新值在数组末尾pc[size()-1]】
+vector<double> test::SeriesWAverage(vector<double> pc, int num)
+{
+	vector<double> newvector; //声明返回结果容器
+	double denom = (double)num * (num + 1) / 2.0; //权重总和 N+(N-1)+...+1 = N*(N+1)/2,循环外只算一次
+
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i + 1 < (size_t)num) //前面数据不足num根时,用从pc[0]到pc[i]的简单平均代替(更平滑过渡,避免直接给0造成的突变)
+		{
+			double sum = 0;
+			for (size_t j = 0; j <= i; j++)
+			{
+				sum += pc[j];
+			}
+			newvector.push_back(sum / (i + 1));
+		}
+		else //数据足够num根时,正常计算加权平均
+		{
+			double sumvalue = 0; //每根bar独立累加,不与上一根bar的结果混在一起
+			for (size_t j = 0; j < (size_t)num; j++) //j从0到num-1,共num项,不再多算一项
+			{
+				sumvalue += (num - j) * pc[i - j]; //最新值pc[i]权重为num,依次递减到权重1
+			}
+			newvector.push_back(sumvalue / denom); //分母用权重总和N*(N+1)/2,而不是累加j
+		}
+	}
+	return newvector;
+}
+// 加权移动平均线（Weighted Moving Average，WMA）的计算方法公式返数组【参数数组为正序,返回数组也为正序】
+// WMA：与SeriesWAverage为同一函数,仅命名不同,兼容通达信/原有调用习惯
+vector<double> test::SeriesWMA(vector<double> pc, int num)
+{
+	return SeriesWAverage(pc, num);
+}
+//功能等同SeriesHigh【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesHighest(vector<double> pc, int num)
+{
+	vector<double> highvector;//声明一个临时存储最高价的变量容器
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i == 0)//第一项
+		{
+			highvector.push_back(pc[i]);//pc容器第一个元素代替
+		}
+		else if (i < num)//不是第一个元素,但是数据数目不够num周期的
+		{
+			double r = 0; //声明一个存储最大值的临时变量
+			for (size_t j = 0; j < i; j++)
+			{
+				r = max2(r, pc[i - j]);// 用上面声明的r变量与PC[i] 从i 到0 共 i+1个数据对比，将大值赋给r
+			}
+			highvector.push_back(r);//将上面循环中得到最大值代替
+		}
+		else//当i的数目大于或等于要求的num个时
+		{
+			double r = 0;//声明一个存储最大值的临时变量
+			for (size_t k = 0; k < num; k++)
+			{
+				r = max2(r, pc[i - k]); //从pc[i]向左数num个元素分别与r比较,将最大的那个值赋给r
+			}
+			highvector.push_back(r);//将上面的r值增加到数组中。
+		}
+	}
+	return highvector; //返回最高价数组
+}
+//功能等同SeriesLow【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesLowest(vector<double> pc, int num)
+{
+	vector<double> lowvector;//声明一个临时存储最低价的变量容器
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i == 0)//第一项
+		{
+			lowvector.push_back(pc[i]);//pc容器第一个元素代替
+		}
+		else if (i < num)//不是第一个元素,但是数据数目不够num周期的
+		{
+			double r = pc[i]; //声明一个存储最大值的临时变量,初始值为pc最新元素值pc[i]
+			for (size_t j = 0; j < i; j++)
+			{
+				r = min2(r, pc[i - j]);// 用上面声明的r变量与PC[i] 从i 到0 共 i+1个数据对比，将最小值赋给r
+			}
+			lowvector.push_back(r);//将上面循环中得到最小值代替
+		}
+		else//当i的数目大于或等于要求的num个时
+		{
+			double r = pc[i]; //声明一个存储最大值的临时变量,初始值为pc最新元素值pc[i]
+			for (size_t k = 0; k < num; k++)
+			{
+				r = min2(r, pc[i - k]); //从pc[i]向左数num个元素分别与r比较,将最小的那个值赋给r
+			}
+			lowvector.push_back(r);//将上面的r值增加到数组中。
+		}
+	}
+	return lowvector; //返回最高价数组
+}
+
+//Wilder 平滑法（Wilder's Smoothing Method）是 RSI 指标计算中的核心方法，主要用于计算 RSI 中的平均上涨幅度（AvgU）和平均下跌幅度（AvgD）【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesWilderSmoothingMethod(vector<double> pc, int num)
+{
+	vector<double>newv;// 声明一个中间变量
+	double r = 0;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i < num)
+		{
+			r = r + pc[i];
+			newv.push_back(r / num);//用简单移动平均代替
+		}
+		else
+		{
+			newv.push_back((newv[i - 1] * ((double)num - 1) + pc[i]) / num);
+		}
+	}
+	return newv;
+}
+//数组型方差Variance计算公式【参数数组为正序, 返回数组也为正序】
+vector<double> test::SeriesVariance(vector<double>pc, int num)
+{
+	vector<double>avgma, newvector;
+	avgma = SeriesAverage(pc, num);//中间均线
+
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i < num)
+		{
+			newvector.push_back((int)0);
+		}
+		else
+		{
+			double sumdev = 0;
+			for (size_t j = 0; j < num; j++)
+			{
+				sumdev = sumdev + pow(pc[i - j] - avgma[i], 2);//偏离平方加总
+			}
+			newvector.push_back(sumdev / num);
+		}
+	}
+	return newvector;
+}
+//数组型标准差StandardDev计算公式【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesStandardDev(vector<double> pc, int num)
+{
+	vector<double>avgma, newvector;
+	avgma = SeriesAverage(pc, num);//中间均线
+
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i < num)
+		{
+			newvector.push_back((int)0);
+		}
+		else
+		{
+			double sumdev = 0;
+			for (size_t j = 0; j < num; j++)
+			{
+				sumdev = sumdev + pow(pc[i - j] - avgma[i], 2);//偏离平方加总
+			}
+			newvector.push_back(sqrt(sumdev / num));
+		}
+	}
+	return newvector;
+}
+//数组型Truerange计算公式【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesTruerange()
+{
+	double dPreClose = 0;
+	double sumatr = 0;
+	vector<double>vAtr;
+	RsqBar(sPeriod, sInst);
+	map<string, TKVALUE >::iterator it;
+	for (it = mapK[sPeriod][sInst].begin(); it != mapK[sPeriod][sInst].end(); ++it)
+	{
+		if (dPreClose != 0) //后续bar的计算
+		{
+			double d = it->second.dHigh - it->second.dLow;
+			double dHC = abs(it->second.dHigh - dPreClose);
+			double dLC = abs(it->second.dLow - dPreClose);
+			if (d < dHC)d = dHC;
+			if (d < dLC)d = dLC;
+			vAtr.push_back(d);
+		}
+		dPreClose = it->second.dClose; //第一次运行先将收盘价赋值给dpreclose,方便后同的计算
+	}
+	return vAtr;
+}
+//数组型Truerange的N周期平均计算公式【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesAvgTruerange(int num)
+{
+	double dPreClose = 0;//上根bar的收盘价
+	vector<double>vAtr, avgatr; //tr变量及平均atr变量声明
+	RsqBar(sPeriod, sInst); //调用数据
+	map<string, TKVALUE >::iterator it;//C++中很重要的一个使用场景迭代
+	for (it = mapK[sPeriod][sInst].begin(); it != mapK[sPeriod][sInst].end(); ++it) //在bar数据中进行遍历
+	{
+		if (dPreClose != 0) //，先判断是不是第一个bar,因为涉及到上一个bar的收盘价元素,不是第一个bar就正常计算
+		{
+			double d = it->second.dHigh - it->second.dLow; //当根bar的最高价high - 当根bar的最低价
+			double dHC = abs(it->second.dHigh - dPreClose);//当根bar的最高价high - 上根bar的收盘价(为了防止出现负值，取绝对值) 
+			double dLC = abs(it->second.dLow - dPreClose); //当根bar的最低低价 - 上根bar的收盘价(为了防止出现负值，取绝对值) 
+			if (d < dHC)d = dHC;//三个值比大小，先取两人个比。用一个中间变量d赋值d dHC是的大值，
+			if (d < dLC)d = dLC;//三个值比大小，再用上面的d值与dLC比大小，大的值继续赋给d
+			//这里还有一个更简单更直接的逻辑方法：max3(d,dHC,dLC);这样可以一步求出三者最大值
+			vAtr.push_back(d); //将比较后的最大值存入变量vatr中
+		}
+		dPreClose = it->second.dClose; //第一次运行先将收盘价赋值给dpreclose,方便后同的计算,所以第一轮循环是不涉及计算的
+	}
+
+	for (size_t i = 0; i < vAtr.size(); i++)//对上面的tr进行数组处理
+	{
+		if (i < num) //数量小于周期时用0代替
+		{
+			avgatr.push_back((int)0);//平均atr以0替代
+		}
+		else //bar数目大于要求的周期后正常计算
+		{
+			double sumatr = 0; //中间加总和的变量
+			for (size_t j = 0; j < num; j++) //从标号为i的变量开始
+			{
+				sumatr += vAtr[i - j]; //向左加num个tr值
+			}
+			avgatr.push_back(sumatr / num);//加总的tr值和除以num周期就是平均atr了。存入avgatr数组变量就可以了
+		}
+	}
+	return avgatr; //将刚才的值返回函数就可以了
+}
+//第八部分 数组中级运算函数(极值,均值,方差)【参数数组为正序,返回数组也为正序】
+
+//第九部分 指标函数计算(开始)【参数数组为正序,返回数组也为正序】
+//RSI（相对强弱指数）设计【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesRSI(vector<double> pc, int num)
+{
+	vector<double>cp1, p1_p2, u_p, d_p;//容器变量存入相对应数据元素
+
+	//采集close数据元素
+	cp1 = pc; //close
+
+	//计算close[1]
+	vector <double>c1;
+	c1 = SeriesForwardref(cp1, 1);//LC
+
+	//计算close - close[1]
+	p1_p2 = SeriesMinus(cp1, c1); //CLOSE-LC
+
+	//MAX(CLOSE - LC, 0)
+	for (size_t i = 0; i < cp1.size(); i++)
+	{
+		u_p.push_back(max2(p1_p2[i], 0));//MAX(CLOSE-LC,0)
+		d_p.push_back(iff(p1_p2[i] < 0, abs(p1_p2[i]), 0));
+		//d_p.push_back(abs(p1_p2[i]));//ABS(CLOSE-LC)
+	}
+	//取平均,默认是14周期
+	vector<double>sum_u, sum_d;
+	////wilder
+	//sum_u = SeriesWilderSmoothingMethod(u_p, 14);
+	//sum_d = SeriesWilderSmoothingMethod(d_p, 14);
+	sum_u = SeriesSMA(u_p, num, 1);
+	sum_d = SeriesSMA(d_p, num, 1);
+
+	//计算RS
+	vector<double>RS;
+	RS = SeriesDivide(sum_u, sum_d);
+
+	//计算RSI
+	vector<double>rs1, rs2, rs3, RSI;
+	rs1 = SeriesPlusN(RS, 1);//RS+1
+	rs2 = SeriesNDivide(100, rs1);//100/(RS+1)
+	RSI = SeriesNMinus(100, rs2);//100 - 100/(RS+1)
+	//RSI = SeriestimesN(RS, 100);//RSI = SMA(MAX(CLOSE-LC,0),N1,1)/SMA(ABS(CLOSE-LC),14,1)*100;
+
+	return RSI;
+}
+//KDJ指标中的K值数组变量(正序数组)
+vector<double> test::SeriesKDJ_kvalue()
+{
+	vector<double>highs, lows, closes, highesthigh, lowestlow; //声明四个变量容器，分别存储当根bar的最高价、最低价及period周期的最高价和最低价
+	int period = 9;//声明整数变量KDJ的周期9
+	vector<double> K, D, J;//声明KDJ的三个容器变量
+	highs = SeriesHigh();
+	lows = SeriesLow();
+	closes = SeriesClose();
+	highesthigh = SeriesHighest(highs, period);
+	lowestlow = SeriesLowest(lows, period);
+	vector<double>c_l, h_l, rsv0, rsv;
+	c_l = SeriesMinus(closes, lowestlow);
+	h_l = SeriesMinus(highesthigh, lowestlow);
+	rsv0 = SeriesDivide(c_l, h_l);
+	rsv = SeriestimesN(rsv0, 100);//声明未成熟随机值
+	K = SeriesSMA(rsv, 3, 1);
+	D = SeriesSMA(K, 3, 1);
+	return K;
+}
+//KDJ指标中的D值数组变量(正序数组)
+vector<double> test::SeriesKDJ_dvalue()
+{
+	vector<double>highs, lows, closes, highesthigh, lowestlow; //声明四个变量容器，分别存储当根bar的最高价、最低价及period周期的最高价和最低价
+	int period = 9;//声明整数变量KDJ的周期9
+	vector<double> K, D, J;//声明KDJ的三个容器变量
+	highs = SeriesHigh();
+	lows = SeriesLow();
+	closes = SeriesClose();
+	highesthigh = SeriesHighest(highs, period);
+	lowestlow = SeriesLowest(lows, period);
+	vector<double>c_l, h_l, rsv0, rsv;
+	c_l = SeriesMinus(closes, lowestlow);
+	h_l = SeriesMinus(highesthigh, lowestlow);
+	rsv0 = SeriesDivide(c_l, h_l);
+	rsv = SeriestimesN(rsv0, 100);//声明未成熟随机值
+	K = SeriesSMA(rsv, 3, 1);
+	D = SeriesSMA(K, 3, 1);
+	return D;
+}
+//KDJ指标中的J值数组变量(正序数组)J = 3*K - 2*D
+vector<double> test::SeriesKDJ_jvalue()
+{
+	vector<double>highs, lows, closes, highesthigh, lowestlow; //声明四个变量容器，分别存储当根bar的最高价、最低价及period周期的最高价和最低价
+	int period = 9;//声明整数变量KDJ的周期9
+	vector<double> K, D, J;//声明KDJ的三个容器变量
+	highs = SeriesHigh();//调用正序最高价
+	lows = SeriesLow();//调用正序最低价
+	closes = SeriesClose();//调用正序收盘价
+	highesthigh = SeriesHighest(highs, period);//调用period（9）周期内high的最高价highest(9)
+	lowestlow = SeriesLowest(lows, period);//调用period（9）周期内low的最低价lowest(9)
+	vector<double>c_l, h_l, rsv0, rsv;//声明四个中间变量
+	c_l = SeriesMinus(closes, lowestlow);//close - lowest(9)
+	h_l = SeriesMinus(highesthigh, lowestlow);//highest(9)-lowest(9)
+	rsv0 = SeriesDivide(c_l, h_l);//(close-lowest(9))/(highest(9)-lowest(9))
+	rsv = SeriestimesN(rsv0, 100);//声明未成熟随机值RSV0*100
+	K = SeriesSMA(rsv, 3, 1);//K值(此时K为正序数组，尚未reverse)
+	D = SeriesSMA(K, 3, 1);//D值(此时D为正序数组，尚未reverse)
+
+	vector<double>K3, D2;//声明J值计算的中间变量
+	K3 = SeriestimesN(K, 3);//3*K
+	D2 = SeriestimesN(D, 2);//2*D
+	J = SeriesMinus(K3, D2);//J = 3*K - 2*D
+	return J;
+}
+//返回MACD中的DIFF数组值(正序数组)
+vector<double> test::SeriesMACD_diff(vector<double> pc, int num1, int num2, int num3)
+{
+	vector<double>ema12, ema26, diff, diffavg;
+	ema12 = SeriesXaverage(pc, num1);//ema12
+	ema26 = SeriesXaverage(pc, num2);//ema26
+	diff = SeriesMinus(ema12, ema26);//ema12 - ema26
+	return diff;//返回diff的逆序数组形式，最新数值为diff[0]
+}
+//返回MACD中的DEA数组值(正序数组)
+vector<double> test::SeriesMACD_dea(vector<double> pc, int num1, int num2, int num3)
+{
+	vector<double>ema12, ema26, diff, dea;
+	ema12 = SeriesXaverage(pc, num1);//ema12
+	ema26 = SeriesXaverage(pc, num2);//ema26
+	diff = SeriesMinus(ema12, ema26);//ema12 - ema26
+	dea = SeriesXaverage(diff, num3); //ema(diff,9)
+	return dea;
+}
+//返回MACD中的MACD Bar线数值(正序数组)
+vector<double> test::SeriesMACD(vector<double> pc, int num1, int num2, int num3)
+{
+	vector<double>ema12, ema26, diff, dea, macd0, macd;
+	ema12 = SeriesXaverage(pc, num1);//ema12
+	ema26 = SeriesXaverage(pc, num2);//ema26
+	diff = SeriesMinus(ema12, ema26);//ema12 - ema26
+	dea = SeriesXaverage(diff, num3); //ema(diff,9)
+	macd0 = SeriesMinus(diff, dea);//macd = diff - dea
+	macd = SeriestimesN(macd0, 2);//macd = macd*2
+	return dea;
+}
+//返回均方根(Root Mean Square,RMS)(正序数组)
+vector<double> test::SeriesRMS(vector<double> pc, int num)
+{
+	vector<double>newrms;
+	double rms = 0;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i < num)// 当数组数量不足时用pc[i代替]
+		{
+			newrms.push_back(pc[i]);
+		}
+		else        //正常情况下计算
+		{
+			double sum = 0;
+			for (size_t j = 0; j < num; j++)
+			{
+				sum = sum + pc[i - j] * pc[i - j];
+			}
+			rms = sqrt(sum / num);
+			newrms.push_back(rms);
+		}
+	}
+	return newrms;
+}
+//返回SeriesSuperSmoother(正序数组)
+vector<double> test::SeriesSuperSmoother(vector<double> pc, int num)
+{
+
+	double a1, b1, c1, c2, c3;
+	vector<double>newsupers;
+	a1 = exp(-1.414 * 3.15159 / num);
+	b1 = 2 * a1 * cos(1.414 * 180 / num);
+	c2 = b1;
+	c3 = -a1 * a1;
+	c1 = 1 - c2 - c3;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i < num)
+		{
+			newsupers.push_back((double)0);//当pc数据元素少于num时，newsupers元素用0价格代替
+		}
+		else
+		{
+			double d = c1 * (pc[i] + pc[i - 1]) / 2 + c2 * newsupers[i - 1] + c3 * newsupers[i - 2];//supersmoother计算公式
+			newsupers.push_back(d);
+		}
+	}
+	return newsupers;
+}
+//返回Highpass
+vector<double> test::SeriesHighpass(vector<double> pc, int num) //正序数组
+{
+	double a1, b1, c1, c2, c3;
+	vector<double>newhipass;
+	a1 = exp(-1.414 * 3.15159 / num);
+	b1 = 2 * a1 * cos(1.414 * 180 / num);
+	c2 = b1;
+	c3 = -a1 * a1;
+	c1 = (1 + c2 - c3) / 4;
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		if (i < num)
+		{
+			newhipass.push_back((double)0);//当pc数据元素少于num时，newsupers元素用0价格代替
+		}
+		else
+		{
+			double d = c1 * (pc[i] - 2 * pc[i - 1] + pc[i - 2]) + c2 * newhipass[i - 1] + c3 * newhipass[i - 2];//newhipass计算公式
+			newhipass.push_back(d);
+		}
+	}
+	return newhipass;
+}
+// OBV指标：能量潮,内部用正序数组计算(SeriesClose/SeriesVolume)，最终返回正序数组([0]为最老)
+vector<double>test::SeriesOBV()
+{
+	vector<double> closePrice = SeriesClose();    // 正序，[0]最老
+	vector<double> vol = SeriesVolume();          // 正序，[0]最老
+	// 数据检查
+	if (closePrice.size() != vol.size()) { Print("  收盘价与成交量数据没有对齐！"); return vector<double>(); }
+
+	vector<double> obvSeries(closePrice.size(), 0.0); // 正序中间结果
+
+	for (size_t i = 1; i < closePrice.size(); i++)
+	{
+		double diff = closePrice[i] - closePrice[(double)i - 1];
+
+		if (diff > 0)
+			obvSeries[i] = obvSeries[i - 1] + vol[i];
+		else if (diff < 0)
+			obvSeries[i] = obvSeries[i - 1] - vol[i];
+		else
+			obvSeries[i] = obvSeries[i - 1];
+	}
+	return obvSeries;
+}
+//第九部分 指标函数计算(开始)【参数数组为正序,返回数组也为正序】
+
+//第十部分 数组高级运算函数(高等数学与统计)【参数数组为正序,返回数组也为正序】
+//皮尔逊相关系数计算公式【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesPearsoncorrelationcoefficient(vector<double> pc1, vector<double> pc2, int num)
+{
+	//皮尔逊相关系数（Pearson correlation coefficient）设计
+	//声明两个vector变量存入X,Y两组数据
+	vector<double>X, Y;//两个容器变量存入相对应数据元素
+	vector<double>avgX, avgY;//X,Y的平均值
+	vector<double>covXY;//X,Y的协方差(covariance)
+	vector<double>stdX, stdY;//X,Y标准差
+	vector<double>Rxy;//相关系数
+
+	//采集X数据元素
+	X = pc1;
+
+	//采集Y数据元素(Y与X数据不同品种合约,但是相同周期)
+	Y = pc2;
+
+	//求length周期X,Y的平均值
+	avgX = SeriesAverage(X, num);//调用数组计算公式计算
+	avgY = SeriesAverage(Y, num);//计算Y在length周期的平均数
+
+	vector<double>x_avgx, y_avgy, covxy;
+	x_avgx = SeriesMinus(X, avgX);//计算X[i] - avgX[i]
+	y_avgy = SeriesMinus(Y, avgY);//计算Y[i] - avgY[i]
+	covxy = SeriesTimes(x_avgx, y_avgy);//计算（x-avgx）*(y-avgy)
+	covXY = SeriesSummation(covxy, num);//sumcovxy
+
+	//计算X,Y各自的方差
+	vector<double>x_avgxpow, y_avgypow;
+	vector<double>sum_x_avgx, sum_y_avgy;
+	vector<double>std_x_avgx, std_y_avgy, std_xy;
+	x_avgxpow = SeriesPowerN(x_avgx, 2);//(X[i] - avgX)^2
+	y_avgypow = SeriesPowerN(y_avgy, 2);//(Y[i] - avgY)^2
+	sum_x_avgx = SeriesSummation(x_avgxpow, num);
+	sum_y_avgy = SeriesSummation(y_avgypow, num);
+	std_x_avgx = Seriessquareroot(sum_x_avgx);
+	std_y_avgy = Seriessquareroot(sum_y_avgy);
+	std_xy = SeriesTimes(std_x_avgx, std_y_avgy);
+	//计算相关性
+	Rxy = SeriesDivide(covXY, std_xy);//计算相关性
+	return Rxy;
+}
+//Vector正弦值数组计算【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesSine(vector<double> pc)
+{
+	vector<double>newvector;//声明新变量容器
+	for (size_t i = 0; i < pc.size(); i++)
+	{
+		newvector.push_back(sin(pc[i]));//sin(x)
+	}
+	return newvector;
+}
+//第十部分 数组高级运算函数(高等数学与统计)【参数数组为正序,返回数组也为正序】
+
+//第十一部分 跨期调用函数【参数数组为正序,返回数组也为正序】
+//返回数组形式的period期(day,min60,min30,min15,min15,min10,min5)的pricetype(close,high,low,open)相关价格数据,注意跨的周期一定要比运行周期大【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesCrossOverPeriod(string PriceType, string periodType)
+{
+	vector<double>newprice;
+	RsqBar(periodType, sInst);
+	if (mapK.find(periodType) == mapK.end())
+	{
+		Print("Period Not Exist");
+		return newprice;
+	}
+	if (mapK[periodType].find(sInst) == mapK[periodType].end())
+	{
+		Print("Instrument Not Exist");
+		return newprice;
+	}
+	map<string, TKVALUE >::iterator it;
+	for (it = mapK[periodType][sInst].begin(); it != mapK[periodType][sInst].end(); it++)
+	{
+		if (PriceType == "close")newprice.push_back(it->second.dClose);
+		else if (PriceType == "open")newprice.push_back(it->second.dOpen);
+		else if (PriceType == "high")newprice.push_back(it->second.dHigh);
+		else if (PriceType == "low") newprice.push_back(it->second.dLow);
+		else
+		{
+			Print("CrossOverPeriod : PriceType Error -> " + PriceType);
+			return vector<double>();
+		}
+	}
+	return newprice;
+}
+
+//跨周期中品种调用数据(返回数组形式)【参数数组为正序,返回数组也为正序】
+vector<double> test::SeriesCrossOverPeriodInst(string PriceType, string periodType, string inst)
+{
+	vector<double>newprice;
+	RsqBar(periodType, inst);
+	// 检查周期合法性
+	if (mapK.find(periodType) == mapK.end())
+	{
+		Print("CrossOverPeriodInst : Period Not Exist -> " + periodType);
+		return newprice;
+	}
+	// 检查合约合法性
+	if (mapK[periodType].find(inst) == mapK[periodType].end())
+	{
+		Print("CrossOverPeriodInst : Instrument Not Exist -> " + inst);
+		return newprice;
+	}
+	// 迭代与取值
+	map<string, TKVALUE >::iterator it;
+	for (it = mapK[periodType][inst].begin(); it != mapK[periodType][inst].end(); it++)
+	{
+		if (PriceType == "close")newprice.push_back(it->second.dClose);
+		else if (PriceType == "open")newprice.push_back(it->second.dOpen);
+		else if (PriceType == "high")newprice.push_back(it->second.dHigh);
+		else if (PriceType == "low") newprice.push_back(it->second.dLow);
+		else
+		{
+			Print("CrossOverPeriod : PriceType Error -> " + PriceType);
+			return vector<double>();
+		}
+	}
+	// 返回数组
+	return newprice;
+}
+//第十一部分 跨期调用函数【参数数组为正序,返回数组也为正序】
+
+//第十二部分 特殊调用函数【参数数组为逆序,返回数组也为逆序】
+//=========================================================
+// CrossesAbove
+// 上穿事件（pc1 上穿 pc2）
+// bar = 起始判断位置（0=最新Bar）
+//=========================================================
+bool test::CrossesAbove(vector<double> pc1, vector<double> pc2, int bar)
+{
+	int len1 = (int)pc1.size();
+	int len2 = (int)pc2.size();
+
+	int len = len1 < len2 ? len1 : len2;
+
+	if (len <= 1)
+		return false;
+
+	if (bar < 0)
+		return false;
+
+	if (bar + 1 >= len)
+		return false;
+
+	if (pc1[bar] > pc2[bar] && pc1[bar + 1] <= pc2[bar + 1])
+		return true;
+
+	return false;
+}
+//=========================================================
+// CrossesBelow
+// 下穿事件（pc1 下穿 pc2）
+//=========================================================
+bool test::CrossesBelow(vector<double> pc1, vector<double> pc2, int bar)
+{
+	int len1 = (int)pc1.size();
+	int len2 = (int)pc2.size();
+
+	int len = len1 < len2 ? len1 : len2;
+
+	if (len <= 1)
+		return false;
+
+	if (bar < 0)
+		return false;
+
+	if (bar + 1 >= len)
+		return false;
+
+	if (pc1[bar] < pc2[bar] && pc1[bar + 1] >= pc2[bar + 1])
+		return true;
+
+	return false;
+}
+//=========================================================
+// CrossesOver
+// TS兼容写法 = CrossesAbove
+//=========================================================
+bool test::CrossesOver(vector<double> pc1, vector<double> pc2, int bar)
+{
+	return CrossesAbove(pc1, pc2, bar);
+}
+//=========================================================
+// CrossesUnder
+// TS兼容写法 = CrossesBelow
+//=========================================================
+bool test::CrossesUnder(vector<double> pc1, vector<double> pc2, int bar)
+{
+	return CrossesBelow(pc1, pc2, bar);
+}
+// 第十三部分：策略逻辑函数（Strategy Logic）    
+//=========================================================
+// Ref
+// 返回数组第ref个值（逆序数组）
+//=========================================================
+double test::Ref(vector<double> pc, int ref)
+{
+	if (ref < 0) return 0;
+
+	if (ref >= (int)pc.size()) return 0;
+
+	return pc[ref];
+}
+//=========================================================
+// Abs
+// 返回绝对值
+//=========================================================
+double test::Abs(double value)
+{
+	if (value >= 0)
+		return value;
+
+	return -value;
+}
+//=========================================================
+// Between
+// 判断value是否位于[low,high]
+//=========================================================
+bool test::Between(double value, double low, double high)
+{
+	if (value >= low && value <= high)
+		return true;
+
+	return false;
+}
+//=========================================================
+// Count
+// 最近num根满足条件次数
+//=========================================================
+int test::Count(vector<double> cond, int num)
+{
+	int count = 0;
+
+	int len = (int)cond.size();
+
+	if (len == 0) return 0;
+
+	if (num <= 0) return 0;
+
+	if (num > len)
+		num = len;
+
+	for (int i = 0; i < num; i++)
+	{
+		if (cond[i] == 1)
+			count++;
+	}
+
+	return count;
+}
+//=========================================================
+// Every
+// 最近num根是否全部满足
+//=========================================================
+bool test::Every(vector<double> cond, int num)
+{
+	int len = (int)cond.size();
+
+	if (len == 0) return false;
+
+	if (num <= 0) return false;
+
+	if (num > len)
+		num = len;
+
+	for (int i = 0; i < num; i++)
+	{
+		if (cond[i] != 1)
+			return false;
+	}
+
+	return true;
+}
+//=========================================================
+// Exist
+// 最近num根是否存在满足条件
+//=========================================================
+bool test::Exist(vector<double> cond, int num)
+{
+	int len = (int)cond.size();
+
+	if (len == 0) return false;
+
+	if (num <= 0) return false;
+
+	if (num > len)
+		num = len;
+
+	for (int i = 0; i < num; i++)
+	{
+		if (cond[i] == 1)
+			return true;
+	}
+
+	return false;
+}
+//=========================================================
+// BarsSince
+// 返回距离最近一次条件成立经过多少Bar
+//=========================================================
+int test::BarsSince(vector<double> cond)
+{
+	int len = (int)cond.size();
+
+	if (len == 0)
+		return -1;
+
+	for (int i = 0; i < len; i++)
+	{
+		if (cond[i] == 1)
+			return i;
+	}
+
+	return -1;
+}
+//=========================================================
+// ValueWhen
+// 返回最近(或第N次)条件成立对应value
+//=========================================================
+double test::ValueWhen(vector<double> cond, vector<double> value, int occurrence)
+{
+	int len;
+
+	int count = 0;
+
+	if (occurrence <= 0)
+		return 0;
+
+	len = (int)cond.size();
+
+	if (len == 0)
+		return 0;
+
+	if ((int)value.size() < len)
+		len = (int)value.size();
+
+	for (int i = 0; i < len; i++)
+	{
+		if (cond[i] == 1)
+		{
+			count++;
+
+			if (count == occurrence)
+				return value[i];
+		}
+	}
+
+	return 0;
+}
+//=========================================================
+// HHVBars
+// 最近num根最高值距离当前Bar数
+//=========================================================
+int test::HHVBars(vector<double> pc, int num)
+{
+	int len = (int)pc.size();
+
+	if (len == 0)
+		return -1;
+
+	if (num <= 0)
+		return -1;
+
+	if (num > len)
+		num = len;
+
+	double maxValue = pc[0];
+
+	int maxBar = 0;
+
+	for (int i = 1; i < num; i++)
+	{
+		if (pc[i] > maxValue)
+		{
+			maxValue = pc[i];
+			maxBar = i;
+		}
+	}
+
+	return maxBar;
+}
+//=========================================================
+// LLVBars
+// 最近num根最低值距离当前Bar数
+//=========================================================
+int test::LLVBars(vector<double> pc, int num)
+{
+	int len = (int)pc.size();
+
+	if (len == 0)
+		return -1;
+
+	if (num <= 0)
+		return -1;
+
+	if (num > len)
+		num = len;
+
+	double minValue = pc[0];
+
+	int minBar = 0;
+
+	for (int i = 1; i < num; i++)
+	{
+		if (pc[i] < minValue)
+		{
+			minValue = pc[i];
+			minBar = i;
+		}
+	}
+
+	return minBar;
+}
+//=========================================================
+// Greater
+// 大于（>）
+//=========================================================
+// a[i] > b[i]
+vector<double> test::Greater(vector<double> a, vector<double> b)
+{
+	int len = min((int)a.size(), (int)b.size());
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (a[i] > b[i]) ? 1 : 0;
+
+	return ret;
+}
+// a[i] > b
+vector<double> test::Greater(vector<double> a, double b)
+{
+	int len = (int)a.size();
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (a[i] > b) ? 1 : 0;
+
+	return ret;
+}
+//    a > b[i]
+vector<double> test::Greater(double a, vector<double> b)
+{
+	int len = (int)b.size();
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (a > b[i]) ? 1 : 0;
+
+	return ret;
+}
+//=========================================================
+// Less
+// 小于（<）
+//=========================================================
+ // a[i] < b[i]
+vector<double> test::Less(vector<double> a, vector<double> b)
+{
+	int len = min((int)a.size(), (int)b.size());
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (a[i] < b[i]) ? 1 : 0;
+
+	return ret;
+}
+// a[i] < b
+vector<double> test::Less(vector<double> a, double b)
+{
+	int len = (int)a.size();
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (a[i] < b) ? 1 : 0;
+
+	return ret;
+}
+//    a < b[i]
+vector<double> test::Less(double a, vector<double> b)
+{
+	int len = (int)b.size();
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (a < b[i]) ? 1 : 0;
+
+	return ret;
+}
+//=========================================================
+// GreaterEqual 大于等于（>=）
+//=========================================================
+// a[i] >= b[i]
+vector<double> test::GreaterEqual(vector<double> a, vector<double> b)
+{
+	int len = min((int)a.size(), (int)b.size());
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (a[i] >= b[i]) ? 1 : 0;
+
+	return ret;
+}
+// a[i] >= b
+vector<double> test::GreaterEqual(vector<double> a, double b)
+{
+	int len = (int)a.size();
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (a[i] >= b) ? 1 : 0;
+
+	return ret;
+}
+//    a >= b[i]
+vector<double> test::GreaterEqual(double a, vector<double> b)
+{
+	int len = (int)b.size();
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (a >= b[i]) ? 1 : 0;
+
+	return ret;
+}
+//=========================================================
+// LessEqual
+// 小于等于（<=）
+//=========================================================
+// a[i] <= b[i]
+vector<double> test::LessEqual(vector<double> a, vector<double> b)
+{
+	int len = min((int)a.size(), (int)b.size());
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (a[i] <= b[i]) ? 1 : 0;
+
+	return ret;
+}
+// a[i] <= b
+vector<double> test::LessEqual(vector<double> a, double b)
+{
+	int len = (int)a.size();
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (a[i] <= b) ? 1 : 0;
+
+	return ret;
+}
+//    a <= b[i]
+vector<double> test::LessEqual(double a, vector<double> b)
+{
+	int len = (int)b.size();
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (a <= b[i]) ? 1 : 0;
+
+	return ret;
+}
+//=========================================================
+// Equal
+// 等于（==）
+//=========================================================
+// a[i] == b[i]
+vector<double> test::Equal(vector<double> a, vector<double> b)
+{
+	int len = min((int)a.size(), (int)b.size());
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (fabs(a[i] - b[i]) < 1e-10) ? 1 : 0;
+
+	return ret;
+}
+// a[i] == b
+vector<double> test::Equal(vector<double> a, double b)
+{
+	int len = (int)a.size();
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (fabs(a[i] - b) < 1e-10) ? 1 : 0;
+
+	return ret;
+}
+//    a == b[i]
+vector<double> test::Equal(double a, vector<double> b)
+{
+	int len = (int)b.size();
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (fabs(a - b[i]) < 1e-10) ? 1 : 0;
+
+	return ret;
+}
+//=========================================================
+// NotEqual
+// 不等于（!=）
+//=========================================================
+ // a[i] != b[i]
+vector<double> test::NotEqual(vector<double> a, vector<double> b)
+{
+	int len = min((int)a.size(), (int)b.size());
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (fabs(a[i] - b[i]) >= 1e-10) ? 1 : 0;
+
+	return ret;
+}
+// a[i] != b
+vector<double> test::NotEqual(vector<double> a, double b)
+{
+	int len = (int)a.size();
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (fabs(a[i] - b) >= 1e-10) ? 1 : 0;
+
+	return ret;
+}
+//    a != b[i]
+vector<double> test::NotEqual(double a, vector<double> b)
+{
+	int len = (int)b.size();
+
+	vector<double> ret(len);
+
+	for (int i = 0; i < len; i++)
+		ret[i] = (fabs(a - b[i]) >= 1e-10) ? 1 : 0;
+
+	return ret;
+}
+//=========================================================
+// And 与
+//=========================================================
+vector<double> test::And(vector<double> a, vector<double> b)
+{
+	int n = min(a.size(), b.size());
+	vector<double> result(n, 0.0);
+
+	for (size_t i = 0; i < n; i++)
+	{
+		result[i] = (a[i] != 0.0 && b[i] != 0.0) ? 1.0 : 0.0;
+	}
+
+	return result;
+}
+
+//=========================================================
+// Or 或
+//=========================================================
+vector<double> test::Or(vector<double> a, vector<double> b)
+{
+	int n = min(a.size(), b.size());
+	vector<double> result(n, 0.0);
+
+	for (size_t i = 0; i < n; i++)
+	{
+		result[i] = (a[i] != 0.0 || b[i] != 0.0) ? 1.0 : 0.0;
+	}
+
+	return result;
+}
+
+//=========================================================
+// Not 非
+//=========================================================
+vector<double> test::Not(vector<double> a)
+{
+	int n = a.size();
+	vector<double> result(n, 0.0);
+
+	for (size_t i = 0; i < n; i++)
+	{
+		result[i] = (a[i] == 0.0) ? 1.0 : 0.0;
+	}
+
+	return result;
+}
+
+//=========================================================
+// Xor 异或
+//=========================================================
+vector<double> test::Xor(vector<double> a, vector<double> b)
+{
+	int n = min(a.size(), b.size());
+	vector<double> result(n, 0.0);
+
+	for (size_t i = 0; i < n; i++)
+	{
+		bool aa = (a[i] != 0.0);
+		bool bb = (b[i] != 0.0);
+
+		result[i] = (aa != bb) ? 1.0 : 0.0;
+	}
+
+	return result;
+}
+//+-----------------------------------------------------------------------------------------------------------------+
+//| SeriesIff 数组条件判断                                                                                           |
+//|                                                                                                                 |
+//| cond[i] != 0  -> 返回 a[i]                                                                                     |
+//| cond[i] == 0  -> 返回 b[i]                                                                                     |
+//|                                                                                                                 |
+//| 对应公式：IF(条件,A,B)                                                                                           |
+//+-----------------------------------------------------------------------------------------------------------------+
+vector<double> test::SeriesIff(vector<double> cond, vector<double> a, vector<double> b)
+{
+	vector<double> result;
+
+	int n = cond.size();
+
+	if (a.size() < n)
+		n = a.size();
+
+	if (b.size() < n)
+		n = b.size();
+
+	result.resize(n);
+
+	for (int i = 0; i < n; i++)
+	{
+		if (cond[i] != 0)
+			result[i] = a[i];
+		else
+			result[i] = b[i];
+	}
+
+	return result;
+}
+//+-----------------------------------------------------------------------------------------------------------------+
+//| SeriesIff 数组条件判断                                                                                           |
+//|                                                                                                                 |
+//| cond[i] != 0  -> 返回 a[i]                                                                                     |
+//| cond[i] == 0  -> 返回常数 b                                                                                     |
+//+-----------------------------------------------------------------------------------------------------------------+
+vector<double> test::SeriesIff(vector<double> cond, vector<double> a, double b)
+{
+	vector<double> result;
+
+	int n = cond.size();
+
+	if (a.size() < n)
+		n = a.size();
+
+	result.resize(n);
+
+	for (int i = 0; i < n; i++)
+	{
+		if (cond[i] != 0)
+			result[i] = a[i];
+		else
+			result[i] = b;
+	}
+
+	return result;
+}
+//+-----------------------------------------------------------------------------------------------------------------+
+//| SeriesIff 数组条件判断                                                                                           |
+//|                                                                                                                 |
+//| cond[i] != 0  -> 返回常数 a                                                                                     |
+//| cond[i] == 0  -> 返回 b[i]                                                                                     |
+//+-----------------------------------------------------------------------------------------------------------------+
+vector<double> test::SeriesIff(vector<double> cond, double a, vector<double> b)
+{
+	vector<double> result;
+
+	int n = cond.size();
+
+	if (b.size() < n)
+		n = b.size();
+
+	result.resize(n);
+
+	for (int i = 0; i < n; i++)
+	{
+		if (cond[i] != 0)
+			result[i] = a;
+		else
+			result[i] = b[i];
+	}
+
+	return result;
+}
+//=========================================================
+// CrossAbove 上穿条件序列
+// 当前Bar：a>b
+// 上一Bar：a<=b
+//=========================================================
+vector<double> test::CrossAbove(vector<double> a, vector<double> b)
+{
+	int n = min(a.size(), b.size());
+	vector<double> result(n, 0.0);
+
+	if (n < 2)
+		return result;
+
+	for (size_t i = 0; i < n - 1; i++)
+	{
+		if (a[i] > b[i] &&
+			a[i + 1] <= b[i + 1])
+		{
+			result[i] = 1.0;
+		}
+	}
+
+	return result;
+}
+//=========================================================
+// CrossBelow 下穿条件序列
+// 当前Bar：a<b
+// 上一Bar：a>=b
+//=========================================================
+vector<double> test::CrossBelow(vector<double> a, vector<double> b)
+{
+	int n = min(a.size(), b.size());
+	vector<double> result(n, 0.0);
+
+	if (n < 2)
+		return result;
+
+	for (size_t i = 0; i < n - 1; i++)
+	{
+		if (a[i] < b[i] &&
+			a[i + 1] >= b[i + 1])
+		{
+			result[i] = 1.0;
+		}
+	}
+
+	return result;
+}
+//++---------------------------------------------------------------------公式(function)模块(结束)---------------------------------------------------------------------
